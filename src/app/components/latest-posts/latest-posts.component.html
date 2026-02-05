@@ -1,0 +1,60 @@
+<section>
+  <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+    <div class="flex items-baseline justify-between mb-8">
+      <h2 class="text-2xl font-bold text-slate-900">{{ title }}</h2>
+      @if (viewAllHref && viewAllLabel) {
+        <a
+          [href]="viewAllHref"
+          class="text-sm font-semibold text-amber-700 hover:text-amber-900 transition-colors"
+          >{{ viewAllLabel }} →</a
+        >
+      }
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
+      @for (post of visiblePosts; track post.href) {
+        <article
+          class="group bg-white/80 rounded-3xl border border-amber-200/60 shadow-lg hover:shadow-2xl hover:shadow-amber-200/50 hover:-translate-y-2 transition-all duration-500 overflow-hidden backdrop-blur-sm hover:bg-white"
+        >
+          <div class="h-40 bg-gradient-to-br from-amber-200/70 to-amber-400/50 shadow-inner"></div>
+
+          <div class="p-6 pb-8 flex flex-col h-full">
+            <p class="text-sm text-slate-600 uppercase tracking-wide font-medium mb-2">
+              @if (post.tag) {
+                <span>{{ post.tag }}</span>
+              }
+              @if (post.dateLabel) {
+                <span> • {{ post.dateLabel }}</span>
+              }
+            </p>
+
+            <h3
+              class="text-xl font-bold text-slate-900 leading-tight group-hover:text-amber-900 transition-colors mb-3 line-clamp-2"
+            >
+              <a [href]="post.href" class="hover:underline underline-offset-2">
+                {{ post.title }}
+              </a>
+            </h3>
+
+            @if (post.excerpt) {
+              <p class="text-slate-700 leading-relaxed flex-1 mb-4 line-clamp-3">
+                {{ post.excerpt }}
+              </p>
+            } @else {
+              <div class="flex-1"></div>
+            }
+
+            <div class="flex flex-wrap gap-2">
+              @if (post.tag) {
+                <span
+                  class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100/80 text-amber-800 border border-amber-300/60"
+                  >{{ post.tag }}</span
+                >
+              }
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</section>
