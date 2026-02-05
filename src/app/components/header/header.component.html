@@ -1,8 +1,13 @@
 <header class="sticky top-0 z-50 bg-amber-100/90 backdrop-blur-xl border-b border-amber-200/50 supports-backdrop-blur:bg-amber-100/90">
+  <!-- state: pure Tailwind (peer) -->
+  <input id="mobile-nav" type="checkbox" class="peer hidden" aria-hidden="true" />
+
   <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
     <!-- Brand -->
     <a href="#" class="flex items-center gap-2 group">
-      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 shadow-lg shadow-amber-300/50 group-hover:shadow-xl group-hover:shadow-amber-300/60 transition-all duration-300"></div>
+      <div
+        class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 shadow-lg shadow-amber-300/50 group-hover:shadow-xl group-hover:shadow-amber-300/60 transition-all duration-300"
+      ></div>
       <span class="text-sm font-bold tracking-tight uppercase text-amber-800">Cozy Nest Blog</span>
     </a>
 
@@ -81,10 +86,84 @@
     </nav>
 
     <!-- Mobile Toggle -->
-    <button class="md:hidden p-2 rounded-xl text-amber-700 hover:bg-amber-200/50 hover:text-amber-900 transition-all duration-200" aria-label="Open menu" type="button">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <label
+      for="mobile-nav"
+      class="md:hidden p-2 rounded-xl text-amber-700 hover:bg-amber-200/50 hover:text-amber-900 transition-all duration-200 cursor-pointer"
+      aria-label="Toggle menu"
+    >
+      <svg class="w-6 h-6 peer-checked:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
       </svg>
-    </button>
+
+      <!-- close icon -->
+      <svg class="w-6 h-6 hidden peer-checked:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </label>
   </div>
+
+  <!-- Mobile Backdrop (tap to close) -->
+  <label
+    for="mobile-nav"
+    class="fixed inset-0 bg-black/30 opacity-0 invisible transition-opacity duration-200 peer-checked:opacity-100 peer-checked:visible md:hidden"
+    aria-hidden="true"
+  ></label>
+
+  <!-- Mobile Menu Panel -->
+  <nav
+    class="md:hidden fixed top-[60px] left-0 right-0 mx-4 rounded-3xl border border-white/60 bg-white/95 backdrop-blur-md shadow-2xl shadow-black/10
+           translate-y-[-8px] opacity-0 invisible transition-all duration-200
+           peer-checked:translate-y-0 peer-checked:opacity-100 peer-checked:visible"
+    aria-label="Mobile primary"
+  >
+    <div class="p-2">
+      <a
+        href="#"
+        class="block px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors"
+      >
+        Home
+      </a>
+
+      <details class="group rounded-2xl">
+        <summary
+          class="list-none cursor-pointer px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors flex items-center justify-between"
+        >
+          Categories
+          <svg class="w-4 h-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </summary>
+
+        <div class="px-2 pb-2">
+          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Home Improvement</a>
+          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Interior Decorating</a>
+          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Cleaning &amp; Housekeeping</a>
+          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Organization &amp; Storage</a>
+          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Outdoor &amp; Gardening</a>
+        </div>
+      </details>
+
+      <a
+        href="#about"
+        class="block px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors"
+      >
+        About
+      </a>
+      <a
+        href="#contact"
+        class="block px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors"
+      >
+        Contact
+      </a>
+
+      <div class="p-2">
+        <a
+          href="#"
+          class="block text-center px-4 py-3 rounded-2xl border border-amber-300/50 bg-gradient-to-r from-amber-100/80 to-amber-200/80 text-amber-800 text-sm font-semibold shadow-sm shadow-amber-200/50 hover:shadow-md hover:shadow-amber-300/60 hover:bg-amber-200/90 transition-all duration-300"
+        >
+          Work with me
+        </a>
+      </div>
+    </div>
+  </nav>
 </header>
