@@ -1,0 +1,23 @@
+<app-hero-slider [slides]="heroSlides" [autoplayMs]="6000" />
+
+<section class="home__section">
+  <app-latest-posts
+    title="Latest posts"
+    [posts]="latestPosts"
+    viewAllLabel="View all"
+    viewAllHref="/posts"
+    [maxItems]="4"
+  />
+</section>
+
+<app-categories-grid title="Browse categories" [items]="categories" />
+
+<section class="home__section">
+  <app-newsletter-signup />
+</section>
+
+
+<app-about-section title="About" subtitle="subtitle" />
+
+<app-contact-section/>
+<!-- ...future home content... -->
