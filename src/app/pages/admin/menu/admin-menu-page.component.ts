@@ -25,7 +25,7 @@ type MenuItem = {
   label: string;
   href: string;
   order: number;
-  subcategories?: Subcategory[];
+  subcategories: Subcategory[]; // always defined for safe rendering
 };
 
 @Component({
@@ -66,7 +66,6 @@ export class AdminMenuPageComponent implements OnDestroy {
           const href: string = data?.href ?? '#';
           const order: number = Number(data?.order ?? 0);
 
-          // read subcategories either from document field or subcollection
           let subs: Subcategory[] = [];
 
           if (Array.isArray(data?.subcategories)) {
@@ -99,9 +98,7 @@ export class AdminMenuPageComponent implements OnDestroy {
             }
           }
 
-          const link: MenuItem = { id, label, href, order };
-          if (subs.length) link.subcategories = subs;
-          return link;
+          return { id, label, href, order, subcategories: subs };
         }),
       );
 
