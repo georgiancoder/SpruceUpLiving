@@ -30,7 +30,6 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMenu();
-    // this.loadCategories();
   }
 
   // updated: load menu and their subcategories (array field or subcollection)
@@ -82,51 +81,4 @@ export class HeaderComponent implements OnInit {
     }
   }
 
-  // new: load categories and their subcategories
-  private async loadCategories() {
-    try {
-      const db = getFirestore();
-      const colRef = collection(db, 'categories');
-      const snap = await getDocs(colRef);
-
-      const cats = await Promise.all(
-        snap.docs.map(async (d) => {
-          const data = d.data() as any;
-          const label: string = data?.label ?? 'Untitled';
-          const href: string = data?.href ?? '#';
-
-          // if document contains a "subcategories" array field, use it
-          let subs: Subcategory[] = [];
-          if (Array.isArray(data?.subcategories)) {
-            subs = data.subcategories.map((s: any) => ({
-              label: s?.label ?? String(s ?? 'Untitled'),
-              href: s?.href ?? '#'
-            }));
-          } else {
-            // otherwise, attempt to read a subcollection "subcategories"
-            try {
-              const subCol = collection(db, 'categories', d.id, 'subcategories');
-              const subSnap = await getDocs(subCol);
-              subs = subSnap.docs.map((sd) => {
-                const sdData = sd.data() as any;
-                return {
-                  label: sdData?.label ?? 'Untitled',
-                  href: sdData?.href ?? '#'
-                };
-              });
-            } catch (e) {
-              // ignore if subcollection doesn't exist or read fails
-            }
-          }
-
-          return { label, href, subcategories: subs } as Category;
-        })
-      );
-
-      this.categories.set(cats);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load categories from Firestore', err);
-    }
-  }
 }
