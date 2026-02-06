@@ -53,10 +53,6 @@ export class AdminMenuPageComponent implements OnDestroy, OnInit {
     this.loadMenu();
   }
 
-  readonly canAdd = computed(
-    () => this.newLabel.trim().length > 0 && this.newUrl.trim().length > 0 && !this.loading(),
-  );
-
 
   private async loadMenu() {
     try {
@@ -126,12 +122,11 @@ export class AdminMenuPageComponent implements OnDestroy, OnInit {
     const label = this.newLabel.trim();
     const url = this.newUrl.trim();
     if (!label || !url) return;
-
     const maxOrder = this.items().reduce((m, it) => Math.max(m, it.order), -1);
     const order = maxOrder + 1;
 
     try {
-      await addDoc(this.colRef, { label, url, order });
+      await addDoc(this.colRef, { label, href: url, order });
       this.newLabel = '';
       this.newUrl = '';
     } catch (e: any) {
