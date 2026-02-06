@@ -244,4 +244,14 @@ export class AdminMenuPageComponent implements OnDestroy {
       this.errorMessage.set(e?.message ?? 'Failed to add subcategory');
     }
   }
+
+  async removeSubcategory(parent: MenuItem, subcategoryId: string) {
+    try {
+      await deleteDoc(doc(this.db, 'menu', parent.id, 'subcategories', subcategoryId));
+      this.loading.set(true);
+      await this.loadMenu();
+    } catch (e: any) {
+      this.errorMessage.set(e?.message ?? 'Failed to delete subcategory');
+    }
+  }
 }
