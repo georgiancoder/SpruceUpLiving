@@ -8,43 +8,8 @@ import { AdminPostsPageComponent } from './pages/admin/posts/admin-posts-page.co
 import { LoginPageComponent } from './pages/login/login-page.component';
 import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-dashboard.component';
 
-import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-
-const adminAuthGuard: CanActivateFn = (_route, state) => {
-  const router = inject(Router);
-
-  return new Promise<boolean>((resolve) => {
-    const auth = getAuth();
-    const unsub = onAuthStateChanged(auth, (user) => {
-      unsub();
-
-      if (user) return resolve(true);
-
-      void router.navigate(['/admin'], { queryParams: { returnUrl: state.url } });
-      resolve(false);
-    });
-  });
-};
-
-const redirectAuthedFromAdminLoginGuard: CanActivateFn = (_route, _state) => {
-  const router = inject(Router);
-
-  return new Promise<boolean>((resolve) => {
-    const auth = getAuth();
-    const unsub = onAuthStateChanged(auth, (user) => {
-      unsub();
-
-      if (user) {
-        void router.navigate(['/admin/dashboard']);
-        return resolve(false);
-      }
-
-      resolve(true);
-    });
-  });
-};
+import { adminAuthGuard } from './guards/admin-auth.guard';
+import { redirectAuthedFromAdminLoginGuard } from './guards/redirect-authed-from-admin-login.guard';
 
 export const routes: Routes = [
   // Root shows login
