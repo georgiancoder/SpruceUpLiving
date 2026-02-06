@@ -1,0 +1,82 @@
+<section class="space-y-6">
+  <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight text-gray-900">Categories</h1>
+      <p class="mt-1 text-sm text-gray-600">Create and manage categories.</p>
+    </div>
+
+    <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+      <a
+        routerLink="/admin/dashboard"
+        class="inline-flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
+      >
+        Back to dashboard
+      </a>
+
+      <form class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center" (ngSubmit)="add()">
+        <input
+          class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-400 sm:w-64"
+          name="name"
+          placeholder="New category name"
+          [(ngModel)]="newName"
+        />
+        <button
+          type="submit"
+          class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
+          [disabled]="!canAdd()"
+        >
+          Add
+        </button>
+      </form>
+    </div>
+  </header>
+
+  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <div class="border-b border-gray-200 px-4 py-3">
+      <div class="flex items-center justify-between gap-3">
+        <div class="text-sm font-semibold text-gray-900">All categories</div>
+        <div class="text-xs text-gray-500">{{ categories().length }} total</div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[520px] text-left text-sm">
+        <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+        <tr>
+          <th class="px-4 py-3">Name</th>
+          <th class="px-4 py-3">Slug</th>
+          <th class="px-4 py-3 text-right">Posts</th>
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-200">
+          @for (c of categories(); track c.id) {
+            <tr class="hover:bg-gray-50/70">
+              <td class="px-4 py-3 font-medium text-gray-900">{{ c.name }}</td>
+              <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ c.slug }}</td>
+              <td class="px-4 py-3 text-right text-gray-700">{{ c.postCount ?? 0 }}</td>
+              <td class="px-4 py-3">
+                <div class="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                    (click)="remove(c.id)"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td class="px-4 py-6 text-center text-sm text-gray-500" colspan="4">
+                No categories yet. Add your first one above.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

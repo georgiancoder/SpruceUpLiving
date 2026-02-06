@@ -10,6 +10,7 @@ import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-das
 
 import { adminAuthGuard } from './guards/admin-auth.guard';
 import { redirectAuthedFromAdminLoginGuard } from './guards/redirect-authed-from-admin-login.guard';
+import {AdminCategoriesPageComponent} from './pages/admin/categories/admin-categories-page.component';
 
 export const routes: Routes = [
   // Root shows login
@@ -30,7 +31,8 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', component: LoginPageComponent, canActivate: [redirectAuthedFromAdminLoginGuard] },
       { path: 'posts', canActivate: [adminAuthGuard], component: AdminPostsPageComponent },
-      { path: 'dashboard', canActivate: [adminAuthGuard], component: AdminDashboardComponent }
+      { path: 'dashboard', canActivate: [adminAuthGuard], component: AdminDashboardComponent },
+      { path: 'categories', canActivate: [adminAuthGuard], component: AdminCategoriesPageComponent }
     ],
   },
 
