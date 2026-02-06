@@ -1,0 +1,108 @@
+<section class="space-y-6">
+  <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight text-gray-900">Menu</h1>
+      <p class="mt-1 text-sm text-gray-600">Edit navigation items and ordering.</p>
+    </div>
+
+    <a
+      routerLink="/admin/dashboard"
+      class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+    >
+      Back to dashboard
+    </a>
+  </header>
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <form
+      class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-1"
+      (ngSubmit)="add()"
+    >
+      <h2 class="text-sm font-semibold text-gray-900">Add item</h2>
+
+      <div class="mt-4 space-y-3">
+        <label class="block text-xs font-semibold text-gray-600">
+          Label
+          <input
+            class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-400"
+            name="label"
+            [(ngModel)]="newLabel"
+            placeholder="e.g. Home"
+          />
+        </label>
+
+        <label class="block text-xs font-semibold text-gray-600">
+          URL
+          <input
+            class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-gray-400"
+            name="url"
+            [(ngModel)]="newUrl"
+            placeholder="/main"
+          />
+        </label>
+
+        <button
+          type="submit"
+          class="w-full rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
+          [disabled]="!canAdd()"
+        >
+          Add
+        </button>
+
+        <p class="text-xs text-gray-500">
+          Local-only for now. Wire persistence (Firestore/API) later.
+        </p>
+      </div>
+    </form>
+
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm lg:col-span-2">
+      <div class="border-b border-gray-200 px-4 py-3">
+        <div class="flex items-center justify-between gap-3">
+          <div class="text-sm font-semibold text-gray-900">Menu items</div>
+          <div class="text-xs text-gray-500">{{ items().length }} total</div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-gray-200">
+        @for (item of items(); track item.id; let i = $index) {
+          <div class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="min-w-0">
+              <div class="truncate text-sm font-semibold text-gray-900">{{ item.label }}</div>
+              <div class="truncate text-xs text-gray-500">{{ item.url }}</div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                (click)="move(i, -1)"
+                [disabled]="i === 0"
+              >
+                Up
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                (click)="move(i, 1)"
+                [disabled]="i === items().length - 1"
+              >
+                Down
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                (click)="remove(item.id)"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <div class="px-4 py-10 text-center text-sm text-gray-500">
+            No menu items yet. Add one on the left.
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
