@@ -50,6 +50,11 @@ export class AdminMenuPageComponent implements OnDestroy {
   subLabel = '';
   subUrl = '';
 
+  // subcategory edit state
+  readonly editingSubcategoryKey = signal<{ parentId: string; subId: string } | null>(null);
+  subEditLabel = '';
+  subEditUrl = '';
+
   private readonly app = initializeApp(environment.firebase);
   private readonly db: Firestore = getFirestore(this.app);
   private readonly colRef = collection(this.db, 'menu');
@@ -252,6 +257,33 @@ export class AdminMenuPageComponent implements OnDestroy {
       await this.loadMenu();
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to delete subcategory');
+    }
+  }
+
+  startEditSubcategory(parent: MenuItem, sub: Subcategory) {
+    this.editingSubcategoryKey.set({ parentId: parent.id, subId: sub.id });
+    this.subEditLabel = sub.label ?? '';
+    this.subEditUrl = sub.href ?? '';
+  }
+
+  cancelEditSubcategory() {
+    this.editingSubcategoryKey.set(null);
+    this.subEditLabel = '';
+    this.subEditUrl = '';
+  }
+
+  async saveEditSubcategory(parent: MenuItem, sub: Subcategory) {
+    const label = this.subEditLabel.trim();
+    const href = this.subEditUrl.trim();
+    if (!label || !href) return;
+
+    try {
+      await updateDoc(doc(this.db, 'menu', parent.id, 'subcategories', sub.id), { label, href });
+      this.cancelEditSubcategory();
+      this.loading.set(true);
+      await this.loadMenu();
+    } catch (e: any) {
+      this.errorMessage.set(e?.message ?? 'Failed to update subcategory');
     }
   }
 }

@@ -116,21 +116,63 @@
                           class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-700"
                           title="{{ sub.href }}"
                         >
-                          <span class="font-semibold">{{ sub.label }}</span>
-                          <span class="text-gray-400">•</span>
-                          <span class="font-mono text-[11px] text-gray-500">{{ sub.href }}</span>
-                          <span class="text-gray-400">•</span>
-                          <span class="text-gray-400">#{{ sub.order ?? 0 }}</span>
+                          @if (editingSubcategoryKey()?.parentId === item.id && editingSubcategoryKey()?.subId === sub.id) {
+                            <input
+                              class="w-28 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs outline-none focus:border-gray-400"
+                              name="subEditLabel-{{ item.id }}-{{ sub.id }}"
+                              [(ngModel)]="subEditLabel"
+                              placeholder="Label"
+                            />
+                            <input
+                              class="w-36 rounded-md border border-gray-200 bg-white px-2 py-1 font-mono text-[11px] outline-none focus:border-gray-400"
+                              name="subEditUrl-{{ item.id }}-{{ sub.id }}"
+                              [(ngModel)]="subEditUrl"
+                              placeholder="/path"
+                            />
 
-                          <button
-                            type="button"
-                            class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-[11px] font-bold text-gray-600 hover:bg-gray-100"
-                            (click)="removeSubcategory(item, sub.id)"
-                            aria-label="Remove subcategory"
-                            title="Remove"
-                          >
-                            ×
-                          </button>
+                            <button
+                              type="button"
+                              class="inline-flex h-6 items-center justify-center rounded-md bg-gray-900 px-2 text-[11px] font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+                              (click)="saveEditSubcategory(item, sub)"
+                              [disabled]="!(subEditLabel.trim().length > 0 && subEditUrl.trim().length > 0)"
+                              title="Save"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              class="inline-flex h-6 items-center justify-center rounded-md border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-700 hover:bg-gray-50"
+                              (click)="cancelEditSubcategory()"
+                              title="Cancel"
+                            >
+                              Cancel
+                            </button>
+                          } @else {
+                            <span class="font-semibold">{{ sub.label }}</span>
+                            <span class="text-gray-400">•</span>
+                            <span class="font-mono text-[11px] text-gray-500">{{ sub.href }}</span>
+                            <span class="text-gray-400">•</span>
+                            <span class="text-gray-400">#{{ sub.order ?? 0 }}</span>
+
+                            <button
+                              type="button"
+                              class="ml-1 inline-flex h-5 items-center justify-center rounded-full border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-700 hover:bg-gray-100"
+                              (click)="startEditSubcategory(item, sub)"
+                              title="Edit subcategory"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-[11px] font-bold text-gray-600 hover:bg-gray-100"
+                              (click)="removeSubcategory(item, sub.id)"
+                              aria-label="Remove subcategory"
+                              title="Remove"
+                            >
+                              ×
+                            </button>
+                          }
                         </span>
                       }
                     </div>
