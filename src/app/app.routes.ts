@@ -6,6 +6,7 @@ import { AdminLayoutComponent } from './pages/admin/admin-layout.component';
 import { AdminPostsPageComponent } from './pages/admin/posts/admin-posts-page.component';
 
 import { LoginPageComponent } from './pages/login/login-page.component';
+import {AdminDashboardComponent} from './pages/admin/admin-dashboard/admin-dashboard.component';
 
 export const routes: Routes = [
   // Root shows login
@@ -26,6 +27,7 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', component: LoginPageComponent },
       { path: 'posts', component: AdminPostsPageComponent },
+      { path: 'dashboard', component: AdminDashboardComponent }
     ],
   },
 
