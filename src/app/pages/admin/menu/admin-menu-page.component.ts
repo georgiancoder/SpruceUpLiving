@@ -130,6 +130,8 @@ export class AdminMenuPageComponent implements OnDestroy {
       await addDoc(this.colRef, { label, href: url, order });
       this.newLabel = '';
       this.newUrl = '';
+      this.loading.set(true);
+      this.loadMenu();
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to add menu item');
     }
@@ -138,6 +140,8 @@ export class AdminMenuPageComponent implements OnDestroy {
   async remove(id: string) {
     try {
       await deleteDoc(doc(this.db, 'menu', id));
+      this.loading.set(true);
+      this.loadMenu();
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to delete menu item');
     }
@@ -157,6 +161,8 @@ export class AdminMenuPageComponent implements OnDestroy {
       batch.update(doc(this.db, 'menu', a.id), { order: b.order });
       batch.update(doc(this.db, 'menu', b.id), { order: a.order });
       await batch.commit();
+      this.loading.set(true);
+      this.loadMenu();
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to reorder menu items');
     }
