@@ -1,4 +1,4 @@
-import {Component, OnDestroy, computed, signal, OnInit} from '@angular/core';
+import { Component, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -10,17 +10,15 @@ import {
   addDoc,
   deleteDoc,
   doc,
-  onSnapshot,
-  orderBy,
-  query,
   writeBatch,
   type Firestore,
-  Unsubscribe, getDocs,
+  getDocs,
+  query,
+  orderBy,
 } from 'firebase/firestore';
 
-// Adjust path if your environment lives elsewhere
-import {environment} from '../../../../environments/environment';
-import {HeaderNavLink, Subcategory} from '../../../components/header/header.component';
+import { environment } from '../../../../environments/environment';
+import { Subcategory } from '../../../components/header/header.component';
 
 type MenuItem = {
   id: string;
@@ -36,7 +34,7 @@ type MenuItem = {
   imports: [FormsModule, RouterLink],
   templateUrl: 'admin-menu.component.html',
 })
-export class AdminMenuPageComponent implements OnDestroy, OnInit {
+export class AdminMenuPageComponent implements OnDestroy {
   readonly items = signal<MenuItem[]>([]);
   readonly loading = signal(true);
   readonly errorMessage = signal<string>('');
@@ -48,49 +46,55 @@ export class AdminMenuPageComponent implements OnDestroy, OnInit {
   newLabel = '';
   newUrl = '';
 
-
   constructor() {
-    this.loadMenu();
+    void this.loadMenu();
   }
 
-
   private async loadMenu() {
-    try {
-      const db = getFirestore(); // expects firebase app to be initialized elsewhere
-      const colRef = collection(db, 'menu'); // collection name: "menu"
-      const snap = await getDocs(colRef);
+    this.loading.set(true);
+    this.errorMessage.set('');
 
-      const items = await Promise.all(
+    try {
+      const snap = await getDocs(query(this.colRef, orderBy('order', 'asc')));
+
+      const items: MenuItem[] = await Promise.all(
         snap.docs.map(async (d) => {
           const data = d.data() as any;
+
           const id: string = d.id;
           const label: string = data?.label ?? 'Untitled';
           const href: string = data?.href ?? '#';
-          const order: number = data?.order ?? 0;
+          const order: number = Number(data?.order ?? 0);
 
           // read subcategories either from document field or subcollection
           let subs: Subcategory[] = [];
+
           if (Array.isArray(data?.subcategories)) {
-            subs = data.subcategories.map((s: any) => ({
-              id: s.id,
-              label: s?.label ?? String(s ?? 'Untitled'),
-              href: s?.href ?? '#',
-              order: Number(data.order ?? 0),
-            }));
+            subs = data.subcategories
+              .map((s: any) => ({
+                id: String(s?.id ?? ''),
+                label: s?.label ?? String(s ?? 'Untitled'),
+                href: s?.href ?? '#',
+                order: Number(s?.order ?? 0),
+              }))
+              .sort((a: any, b: any) => Number(a.order ?? 0) - Number(b.order ?? 0));
           } else {
             try {
-              const subCol = collection(db, 'menu', d.id, 'subcategories');
-              const subSnap = await getDocs(subCol);
-              subs = subSnap.docs.map((sd) => {
-                const sdData = sd.data() as any;
-                return {
-                  id: sd.id,
-                  label: sdData?.label ?? 'Untitled',
-                  href: sdData?.href ?? '#',
-                  order: Number(data.order ?? 0),
-                } satisfies MenuItem;
-              });
-            } catch (e) {
+              const subCol = collection(this.db, 'menu', d.id, 'subcategories');
+              const subSnap = await getDocs(query(subCol, orderBy('order', 'asc')));
+
+              subs = subSnap.docs
+                .map((sd) => {
+                  const sdData = sd.data() as any;
+                  return {
+                    id: sd.id,
+                    label: sdData?.label ?? 'Untitled',
+                    href: sdData?.href ?? '#',
+                    order: Number(sdData?.order ?? 0),
+                  } as Subcategory;
+                })
+                .sort((a: any, b: any) => Number(a.order ?? 0) - Number(b.order ?? 0));
+            } catch {
               // ignore if subcollection doesn't exist or read fails
             }
           }
@@ -98,24 +102,21 @@ export class AdminMenuPageComponent implements OnDestroy, OnInit {
           const link: MenuItem = { id, label, href, order };
           if (subs.length) link.subcategories = subs;
           return link;
-        })
+        }),
       );
-      console.log(items);
-      this.items.set(items)
-      this.loading.set(false)
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load menu from Firestore', err);
+
+      // Defensive sort (even though query orders by order)
+      items.sort((a, b) => a.order - b.order);
+
+      this.items.set(items);
+      this.loading.set(false);
+    } catch (err: any) {
+      this.loading.set(false);
+      this.errorMessage.set(err?.message ?? 'Failed to load menu from Firestore');
     }
   }
 
-
-
   ngOnDestroy() {
-  }
-
-  ngOnInit() {
-
   }
 
   async add() {
@@ -153,8 +154,8 @@ export class AdminMenuPageComponent implements OnDestroy, OnInit {
 
     try {
       const batch = writeBatch(this.db);
-      batch.update(doc(this.db, 'menuItems', a.id), { order: b.order });
-      batch.update(doc(this.db, 'menuItems', b.id), { order: a.order });
+      batch.update(doc(this.db, 'menu', a.id), { order: b.order });
+      batch.update(doc(this.db, 'menu', b.id), { order: a.order });
       await batch.commit();
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to reorder menu items');
