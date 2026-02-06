@@ -13,11 +13,17 @@
 
     <!-- Desktop Nav -->
     <nav class="hidden md:flex items-center gap-7 text-sm font-medium" aria-label="Primary">
-      <a href="#" class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full">
-        Home
-      </a>
+      <!-- render links loaded from Firestore -->
+      <ng-container *ngFor="let link of links()">
+        <a
+          [href]="link.href"
+          class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full"
+        >
+          {{ link.label }}
+        </a>
+      </ng-container>
 
-      <!-- Categories Dropdown (Tailwind-only: hover + focus) -->
+<!--       Categories Dropdown (Tailwind-only: hover + focus) -->
       <div class="relative group">
         <button
           id="categories-toggle"
@@ -73,12 +79,12 @@
         </div>
       </div>
 
-      <a href="#about" class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full">
-        About
-      </a>
-      <a href="#contact" class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full">
-        Contact
-      </a>
+<!--      <a href="#about" class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full">-->
+<!--        About-->
+<!--      </a>-->
+<!--      <a href="#contact" class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full">-->
+<!--        Contact-->
+<!--      </a>-->
 
       <a href="#" class="px-4 py-1.5 rounded-full border border-amber-300/50 bg-gradient-to-r from-amber-100/80 to-amber-200/80 text-amber-800 text-xs font-semibold shadow-sm shadow-amber-200/50 hover:shadow-md hover:shadow-amber-300/60 hover:bg-amber-200/90 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
         Work with me
