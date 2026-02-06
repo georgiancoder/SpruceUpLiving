@@ -286,4 +286,25 @@ export class AdminMenuPageComponent implements OnDestroy {
       this.errorMessage.set(e?.message ?? 'Failed to update subcategory');
     }
   }
+
+  async moveSubcategory(parent: MenuItem, index: number, delta: -1 | 1) {
+    const subs = parent.subcategories ?? [];
+    const nextIndex = index + delta;
+    if (nextIndex < 0 || nextIndex >= subs.length) return;
+
+    const a = subs[index];
+    const b = subs[nextIndex];
+
+    try {
+      const batch = writeBatch(this.db);
+      batch.update(doc(this.db, 'menu', parent.id, 'subcategories', a.id), { order: b.order ?? 0 });
+      batch.update(doc(this.db, 'menu', parent.id, 'subcategories', b.id), { order: a.order ?? 0 });
+      await batch.commit();
+
+      this.loading.set(true);
+      await this.loadMenu();
+    } catch (e: any) {
+      this.errorMessage.set(e?.message ?? 'Failed to reorder subcategory');
+    }
+  }
 }
