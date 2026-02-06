@@ -15,6 +15,7 @@ import {
   getDocs,
   query,
   orderBy,
+  updateDoc, // <-- add
 } from 'firebase/firestore';
 
 import { environment } from '../../../../environments/environment';
@@ -38,6 +39,11 @@ export class AdminMenuPageComponent implements OnDestroy {
   readonly items = signal<MenuItem[]>([]);
   readonly loading = signal(true);
   readonly errorMessage = signal<string>('');
+
+  // edit state
+  readonly editingId = signal<string | null>(null);
+  editLabel = '';
+  editUrl = '';
 
   private readonly app = initializeApp(environment.firebase);
   private readonly db: Firestore = getFirestore(this.app);
@@ -116,6 +122,33 @@ export class AdminMenuPageComponent implements OnDestroy {
   ngOnDestroy() {
   }
 
+  startEdit(item: MenuItem) {
+    this.editingId.set(item.id);
+    this.editLabel = item.label;
+    this.editUrl = item.href;
+  }
+
+  cancelEdit() {
+    this.editingId.set(null);
+    this.editLabel = '';
+    this.editUrl = '';
+  }
+
+  async saveEdit(item: MenuItem) {
+    const label = this.editLabel.trim();
+    const href = this.editUrl.trim();
+    if (!label || !href) return;
+
+    try {
+      await updateDoc(doc(this.db, 'menu', item.id), { label, href });
+      this.cancelEdit();
+      this.loading.set(true);
+      await this.loadMenu();
+    } catch (e: any) {
+      this.errorMessage.set(e?.message ?? 'Failed to update menu item');
+    }
+  }
+
   async add() {
     const label = this.newLabel.trim();
     const url = this.newUrl.trim();
@@ -128,7 +161,7 @@ export class AdminMenuPageComponent implements OnDestroy {
       this.newLabel = '';
       this.newUrl = '';
       this.loading.set(true);
-      this.loadMenu();
+      await this.loadMenu();
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to add menu item');
     }
@@ -138,7 +171,7 @@ export class AdminMenuPageComponent implements OnDestroy {
     try {
       await deleteDoc(doc(this.db, 'menu', id));
       this.loading.set(true);
-      this.loadMenu();
+      await this.loadMenu();
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to delete menu item');
     }
@@ -159,7 +192,7 @@ export class AdminMenuPageComponent implements OnDestroy {
       batch.update(doc(this.db, 'menu', b.id), { order: a.order });
       await batch.commit();
       this.loading.set(true);
-      this.loadMenu();
+      await this.loadMenu();
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to reorder menu items');
     }
