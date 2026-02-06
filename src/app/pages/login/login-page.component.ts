@@ -11,6 +11,7 @@ import {
   browserLocalPersistence,
   signInWithPopup,
   signInWithEmailAndPassword,
+  onAuthStateChanged,
 } from 'firebase/auth';
 
 // Adjust this import path if your env lives elsewhere
@@ -34,6 +35,11 @@ export class LoginPageComponent {
   constructor(private readonly router: Router) {
     // Persist session across refreshes
     void setPersistence(this.auth, browserLocalPersistence);
+
+    // Redirect if already authenticated
+    onAuthStateChanged(this.auth, (user) => {
+      if (user) void this.router.navigate(['/admin/dashboard']);
+    });
   }
 
   async login() {
@@ -41,7 +47,7 @@ export class LoginPageComponent {
     this.errorMessage = '';
     try {
       await signInWithEmailAndPassword(this.auth, this.email, this.password);
-      await this.router.navigate(['/admin']);
+      await this.router.navigate(['/admin/dashboard']);
     } catch (e: any) {
       this.errorMessage = e?.message ?? 'Login failed';
     }

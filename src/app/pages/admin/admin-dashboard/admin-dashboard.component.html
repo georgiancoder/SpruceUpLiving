@@ -1,0 +1,90 @@
+<section class="space-y-6">
+  <header class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight text-gray-900">Dashboard</h1>
+      <p class="mt-1 text-sm text-gray-600">Quick overview and shortcuts.</p>
+    </div>
+
+    @if (user(); as u) {
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
+          <div class="size-10 overflow-hidden rounded-full bg-gray-100">
+            <img
+              [src]="u?.photoURL!"
+              [alt]="u?.displayName || u?.email || 'User avatar'"
+              class="h-full w-full object-cover"
+              referrerpolicy="no-referrer"
+            />
+            <ng-template #avatarFallback>
+              <div class="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-600">
+                {{ (u.displayName || u.email || '?').slice(0, 1).toUpperCase() }}
+              </div>
+            </ng-template>
+          </div>
+
+          <div class="min-w-0">
+            <div class="truncate text-sm font-semibold text-gray-900">
+              {{ u.displayName || u.email || 'Authenticated user' }}
+            </div>
+            <div class="truncate text-xs text-gray-500">
+              {{ u.email }}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          (click)="logout()"
+          class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+        >
+          Logout
+        </button>
+      </div>
+    }
+  </header>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <a
+      class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow"
+      routerLink="/admin/posts"
+    >
+      <div class="text-sm font-medium text-gray-900">Posts</div>
+      <div class="mt-1 text-sm text-gray-600">Create, edit, and publish</div>
+    </a>
+
+    <a
+      class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow"
+      routerLink="/admin/categories"
+    >
+      <div class="text-sm font-medium text-gray-900">Categories</div>
+      <div class="mt-1 text-sm text-gray-600">Organize site taxonomy</div>
+    </a>
+
+    <a
+      class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow"
+      routerLink="/admin/newsletter"
+    >
+      <div class="text-sm font-medium text-gray-900">Newsletter</div>
+      <div class="mt-1 text-sm text-gray-600">Subscribers and exports</div>
+    </a>
+  </div>
+
+  <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <h2 class="text-sm font-semibold text-gray-900">Status</h2>
+    <dl class="mt-3 grid gap-4 sm:grid-cols-3">
+      <div>
+        <dt class="text-xs text-gray-500">Draft posts</dt>
+        <dd class="mt-1 text-lg font-semibold text-gray-900">—</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-gray-500">Published posts</dt>
+        <dd class="mt-1 text-lg font-semibold text-gray-900">—</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-gray-500">Subscribers</dt>
+        <dd class="mt-1 text-lg font-semibold text-gray-900">—</dd>
+      </div>
+    </dl>
+    <p class="mt-3 text-xs text-gray-500">Connect to your backend to populate these stats.</p>
+  </div>
+</section>
