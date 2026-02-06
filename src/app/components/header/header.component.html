@@ -5,10 +5,13 @@
   <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
     <!-- Brand -->
     <a href="#" class="flex items-center gap-2 group">
-      <div
-        class="w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 shadow-lg shadow-amber-300/50 group-hover:shadow-xl group-hover:shadow-amber-300/60 transition-all duration-300"
-      ></div>
-      <span class="text-sm font-bold tracking-tight uppercase text-amber-800">Cozy Nest Blog</span>
+      <!-- replace /assets/logo.png with your actual logo path if different -->
+      <img
+        src="logo.jpg"
+        alt="Cozy Nest Blog logo"
+        class="w-14 h-14 rounded-full object-cover shadow-md group-hover:shadow-lg transition-shadow duration-200"
+      />
+      <span class="text-2xl font-bold tracking-tight uppercase text-amber-800">SPRUCE UP LIVING</span>
     </a>
 
     <!-- Desktop Nav -->
@@ -132,57 +135,33 @@
     <div class="p-2">
       <!-- dynamic mobile menu: render links and their subitems -->
       <ng-container *ngFor="let link of links()">
-        <a [href]="link.href" class="block px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors">
-          {{ link.label }}
-        </a>
+        <ng-container *ngIf="link.subcategories?.length; else singleMobileLink">
+          <details class="group rounded-2xl">
+            <summary
+              class="list-none cursor-pointer px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors flex items-center justify-between"
+            >
+              {{ link.label }}
+              <svg class="w-4 h-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </summary>
 
-        <ng-container *ngIf="link.subcategories?.length">
-          <ng-container *ngFor="let sub of link.subcategories">
-            <a [href]="sub.href" class="block px-4 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80 pl-6">
-              {{ sub.label }}
-            </a>
-          </ng-container>
+            <div class="px-2 pb-2">
+              <ng-container *ngFor="let sub of link.subcategories">
+                <a [href]="sub.href" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80 pl-6">
+                  {{ sub.label }}
+                </a>
+              </ng-container>
+            </div>
+          </details>
         </ng-container>
+
+        <ng-template #singleMobileLink>
+          <a [href]="link.href" class="block px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors">
+            {{ link.label }}
+          </a>
+        </ng-template>
       </ng-container>
-
-      <details class="group rounded-2xl">
-        <summary
-          class="list-none cursor-pointer px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors flex items-center justify-between"
-        >
-          Categories
-          <svg class="w-4 h-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </summary>
-
-        <div class="px-2 pb-2">
-          <!-- dynamic mobile categories -->
-          <ng-container *ngFor="let cat of categories()">
-            <a [href]="cat.href" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">
-              {{ cat.label }}
-            </a>
-
-            <ng-container *ngFor="let sub of cat.subcategories">
-              <a [href]="sub.href" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80 pl-6">
-                {{ sub.label }}
-              </a>
-            </ng-container>
-          </ng-container>
-        </div>
-      </details>
-
-      <a
-        href="#about"
-        class="block px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors"
-      >
-        About
-      </a>
-      <a
-        href="#contact"
-        class="block px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors"
-      >
-        Contact
-      </a>
 
       <div class="p-2">
         <a
