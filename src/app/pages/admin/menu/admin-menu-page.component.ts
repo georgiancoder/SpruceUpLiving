@@ -55,6 +55,9 @@ export class AdminMenuPageComponent implements OnDestroy {
   subEditLabel = '';
   subEditUrl = '';
 
+  // subcategories visibility toggles (per parent item)
+  readonly openSubcategories = signal<Set<string>>(new Set());
+
   private readonly app = initializeApp(environment.firebase);
   private readonly db: Firestore = getFirestore(this.app);
   private readonly colRef = collection(this.db, 'menu');
@@ -306,5 +309,18 @@ export class AdminMenuPageComponent implements OnDestroy {
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to reorder subcategory');
     }
+  }
+
+  isSubcategoriesOpen(parentId: string): boolean {
+    return this.openSubcategories().has(parentId);
+  }
+
+  toggleSubcategories(parentId: string) {
+    this.openSubcategories.update((prev) => {
+      const next = new Set(prev);
+      if (next.has(parentId)) next.delete(parentId);
+      else next.add(parentId);
+      return next;
+    });
   }
 }
