@@ -36,10 +36,6 @@ export class LoginPageComponent {
     // Persist session across refreshes
     void setPersistence(this.auth, browserLocalPersistence);
 
-    // Redirect if already authenticated
-    onAuthStateChanged(this.auth, (user) => {
-      if (user) void this.router.navigate(['/admin/dashboard']);
-    });
   }
 
   async login() {

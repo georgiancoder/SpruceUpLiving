@@ -6,7 +6,45 @@ import { AdminLayoutComponent } from './pages/admin/admin-layout.component';
 import { AdminPostsPageComponent } from './pages/admin/posts/admin-posts-page.component';
 
 import { LoginPageComponent } from './pages/login/login-page.component';
-import {AdminDashboardComponent} from './pages/admin/admin-dashboard/admin-dashboard.component';
+import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-dashboard.component';
+
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+
+const adminAuthGuard: CanActivateFn = (_route, state) => {
+  const router = inject(Router);
+
+  return new Promise<boolean>((resolve) => {
+    const auth = getAuth();
+    const unsub = onAuthStateChanged(auth, (user) => {
+      unsub();
+
+      if (user) return resolve(true);
+
+      void router.navigate(['/admin'], { queryParams: { returnUrl: state.url } });
+      resolve(false);
+    });
+  });
+};
+
+const redirectAuthedFromAdminLoginGuard: CanActivateFn = (_route, _state) => {
+  const router = inject(Router);
+
+  return new Promise<boolean>((resolve) => {
+    const auth = getAuth();
+    const unsub = onAuthStateChanged(auth, (user) => {
+      unsub();
+
+      if (user) {
+        void router.navigate(['/admin/dashboard']);
+        return resolve(false);
+      }
+
+      resolve(true);
+    });
+  });
+};
 
 export const routes: Routes = [
   // Root shows login
@@ -25,9 +63,9 @@ export const routes: Routes = [
     path: 'admin',
     component: AdminLayoutComponent,
     children: [
-      { path: '', pathMatch: 'full', component: LoginPageComponent },
-      { path: 'posts', component: AdminPostsPageComponent },
-      { path: 'dashboard', component: AdminDashboardComponent }
+      { path: '', pathMatch: 'full', component: LoginPageComponent, canActivate: [redirectAuthedFromAdminLoginGuard] },
+      { path: 'posts', canActivate: [adminAuthGuard], component: AdminPostsPageComponent },
+      { path: 'dashboard', canActivate: [adminAuthGuard], component: AdminDashboardComponent }
     ],
   },
 

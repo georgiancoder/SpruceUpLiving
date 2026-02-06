@@ -9,17 +9,18 @@
       <div class="flex items-center gap-2">
         <div class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
           <div class="size-10 overflow-hidden rounded-full bg-gray-100">
-            <img
-              [src]="u?.photoURL!"
-              [alt]="u?.displayName || u?.email || 'User avatar'"
-              class="h-full w-full object-cover"
-              referrerpolicy="no-referrer"
-            />
-            <ng-template #avatarFallback>
+            @if (u.photoURL) {
+              <img
+                [src]="u.photoURL"
+                [alt]="u.displayName || u.email || 'User avatar'"
+                class="h-full w-full object-cover"
+                referrerpolicy="no-referrer"
+              />
+            } @else {
               <div class="flex h-full w-full items-center justify-center text-sm font-semibold text-gray-600">
                 {{ (u.displayName || u.email || '?').slice(0, 1).toUpperCase() }}
               </div>
-            </ng-template>
+            }
           </div>
 
           <div class="min-w-0">
