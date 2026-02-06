@@ -15,7 +15,7 @@ import {
   getDocs,
   query,
   orderBy,
-  updateDoc, // <-- add
+  updateDoc,
 } from 'firebase/firestore';
 
 import { environment } from '../../../../environments/environment';
@@ -44,6 +44,11 @@ export class AdminMenuPageComponent implements OnDestroy {
   readonly editingId = signal<string | null>(null);
   editLabel = '';
   editUrl = '';
+
+  // add-subcategory state
+  readonly addingSubcategoryToId = signal<string | null>(null);
+  subLabel = '';
+  subUrl = '';
 
   private readonly app = initializeApp(environment.firebase);
   private readonly db: Firestore = getFirestore(this.app);
@@ -195,6 +200,48 @@ export class AdminMenuPageComponent implements OnDestroy {
       await this.loadMenu();
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to reorder menu items');
+    }
+  }
+
+  startAddSubcategory(parent: MenuItem) {
+    this.addingSubcategoryToId.set(parent.id);
+    this.subLabel = '';
+    this.subUrl = '';
+  }
+
+  cancelAddSubcategory() {
+    this.addingSubcategoryToId.set(null);
+    this.subLabel = '';
+    this.subUrl = '';
+  }
+
+  toggleAddSubcategory(parent: MenuItem) {
+    if (this.addingSubcategoryToId() === parent.id) {
+      this.cancelAddSubcategory();
+      return;
+    }
+    this.startAddSubcategory(parent);
+  }
+
+  async addSubcategory(parent: MenuItem) {
+    const label = this.subLabel.trim();
+    const href = this.subUrl.trim();
+    if (!label || !href) return;
+
+    try {
+      const maxOrder = (parent.subcategories ?? []).reduce(
+        (m, s: any) => Math.max(m, Number(s?.order ?? 0)),
+        -1,
+      );
+
+      const subCol = collection(this.db, 'menu', parent.id, 'subcategories');
+      await addDoc(subCol, { label, href, order: maxOrder + 1 });
+
+      this.cancelAddSubcategory();
+      this.loading.set(true);
+      await this.loadMenu();
+    } catch (e: any) {
+      this.errorMessage.set(e?.message ?? 'Failed to add subcategory');
     }
   }
 }
