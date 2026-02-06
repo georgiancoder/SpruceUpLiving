@@ -136,7 +136,7 @@ export class AdminMenuPageComponent implements OnDestroy, OnInit {
 
   async remove(id: string) {
     try {
-      await deleteDoc(doc(this.db, 'menuItems', id));
+      await deleteDoc(doc(this.db, 'menu', id));
     } catch (e: any) {
       this.errorMessage.set(e?.message ?? 'Failed to delete menu item');
     }
