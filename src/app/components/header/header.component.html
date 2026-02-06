@@ -13,36 +13,50 @@
 
     <!-- Desktop Nav -->
     <nav class="hidden md:flex items-center gap-7 text-sm font-medium" aria-label="Primary">
-      <!-- render links loaded from Firestore -->
+      <!-- render links loaded from Firestore, show dropdown if subcategories exist -->
       <ng-container *ngFor="let link of links()">
-        <a
-          [href]="link.href"
-          class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full"
-        >
-          {{ link.label }}
-        </a>
+        <div *ngIf="link.subcategories?.length; else singleLink" class="relative group">
+          <button
+            class="flex items-center gap-1 text-amber-700 hover:text-amber-900 pb-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full group"
+            type="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            {{ link.label }}
+            <svg class="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+
+          <!-- hover-bridge -->
+          <div class="absolute left-0 top-full h-3 w-56"></div>
+
+          <div
+            class="absolute top-full left-0 mt-2 w-56 bg-white/95 backdrop-blur-md py-2 px-2 rounded-2xl shadow-2xl shadow-black/10 border border-white/50
+                   opacity-0 invisible scale-95 transition-all duration-200 origin-top
+                   group-hover:opacity-100 group-hover:visible group-hover:scale-100"
+            role="menu"
+          >
+            <a *ngFor="let sub of link.subcategories"
+               [href]="sub.href"
+               class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80 transition-colors">
+              {{ sub.label }}
+            </a>
+          </div>
+        </div>
+
+        <ng-template #singleLink>
+          <a
+            [href]="link.href"
+            class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full"
+          >
+            {{ link.label }}
+          </a>
+        </ng-template>
       </ng-container>
 
-<!--       Categories Dropdown (Tailwind-only: hover + focus) -->
+      <!-- Categories Dropdown (Tailwind-only: hover + focus) -->
       <div class="relative group">
-        <button
-          id="categories-toggle"
-          class="flex items-center gap-1 text-amber-700 hover:text-amber-900 pb-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full group"
-          type="button"
-          aria-haspopup="true"
-          aria-expanded="false"
-        >
-          Categories
-          <svg
-            class="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-180"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
 
         <!-- hover-bridge to prevent flicker -->
         <div class="absolute left-0 top-full h-3 w-56"></div>
@@ -56,35 +70,28 @@
           role="menu"
           aria-labelledby="categories-toggle"
         >
-          <a href="#" role="menuitem" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-800 hover:bg-amber-50/80 transition-colors duration-200">
-            Home Improvement
-            <span class="text-xs text-amber-600 font-medium">DIY, repairs</span>
-          </a>
-          <a href="#" role="menuitem" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-800 hover:bg-amber-50/80 transition-colors duration-200">
-            Interior Decorating
-            <span class="text-xs text-amber-600 font-medium">rooms & style</span>
-          </a>
-          <a href="#" role="menuitem" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-800 hover:bg-amber-50/80 transition-colors duration-200">
-            Cleaning & Housekeeping
-            <span class="text-xs text-amber-600 font-medium">routines</span>
-          </a>
-          <a href="#" role="menuitem" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-800 hover:bg-amber-50/80 transition-colors duration-200">
-            Organization & Storage
-            <span class="text-xs text-amber-600 font-medium">small spaces</span>
-          </a>
-          <a href="#" role="menuitem" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-800 hover:bg-amber-50/80 transition-colors duration-200">
-            Outdoor & Gardening
-            <span class="text-xs text-amber-600 font-medium">balcony/yard</span>
-          </a>
+          <!-- dynamic categories & subcategories -->
+          <ng-container *ngFor="let cat of categories()">
+            <a [href]="cat.href" role="menuitem"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-800 hover:bg-amber-50/80 transition-colors duration-200">
+              {{ cat.label }}
+              <span *ngIf="cat.subcategories?.length" class="text-xs text-amber-600 font-medium">
+                {{ cat.subcategories.length }} topics
+              </span>
+            </a>
+
+            <ng-container *ngIf="cat.subcategories?.length">
+              <div class="px-3 pb-2">
+                <a *ngFor="let sub of cat.subcategories"
+                   [href]="sub.href"
+                   class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80 transition-colors">
+                  {{ sub.label }}
+                </a>
+              </div>
+            </ng-container>
+          </ng-container>
         </div>
       </div>
-
-<!--      <a href="#about" class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full">-->
-<!--        About-->
-<!--      </a>-->
-<!--      <a href="#contact" class="relative pb-1 text-amber-700 hover:text-amber-900 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-gradient-to-r after:from-orange-400 after:to-pink-400 after:rounded-full after:transition-all after:duration-300 hover:after:w-full">-->
-<!--        Contact-->
-<!--      </a>-->
 
       <a href="#" class="px-4 py-1.5 rounded-full border border-amber-300/50 bg-gradient-to-r from-amber-100/80 to-amber-200/80 text-amber-800 text-xs font-semibold shadow-sm shadow-amber-200/50 hover:shadow-md hover:shadow-amber-300/60 hover:bg-amber-200/90 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
         Work with me
@@ -123,12 +130,20 @@
     aria-label="Mobile primary"
   >
     <div class="p-2">
-      <a
-        href="#"
-        class="block px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors"
-      >
-        Home
-      </a>
+      <!-- dynamic mobile menu: render links and their subitems -->
+      <ng-container *ngFor="let link of links()">
+        <a [href]="link.href" class="block px-4 py-3 rounded-2xl text-sm font-semibold text-slate-800 hover:bg-amber-50/80 transition-colors">
+          {{ link.label }}
+        </a>
+
+        <ng-container *ngIf="link.subcategories?.length">
+          <ng-container *ngFor="let sub of link.subcategories">
+            <a [href]="sub.href" class="block px-4 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80 pl-6">
+              {{ sub.label }}
+            </a>
+          </ng-container>
+        </ng-container>
+      </ng-container>
 
       <details class="group rounded-2xl">
         <summary
@@ -141,11 +156,18 @@
         </summary>
 
         <div class="px-2 pb-2">
-          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Home Improvement</a>
-          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Interior Decorating</a>
-          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Cleaning &amp; Housekeeping</a>
-          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Organization &amp; Storage</a>
-          <a href="#" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">Outdoor &amp; Gardening</a>
+          <!-- dynamic mobile categories -->
+          <ng-container *ngFor="let cat of categories()">
+            <a [href]="cat.href" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80">
+              {{ cat.label }}
+            </a>
+
+            <ng-container *ngFor="let sub of cat.subcategories">
+              <a [href]="sub.href" class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80 pl-6">
+                {{ sub.label }}
+              </a>
+            </ng-container>
+          </ng-container>
         </div>
       </details>
 
