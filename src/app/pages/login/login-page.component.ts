@@ -20,7 +20,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   templateUrl: './login-page.component.html',
 })
 export class LoginPageComponent {

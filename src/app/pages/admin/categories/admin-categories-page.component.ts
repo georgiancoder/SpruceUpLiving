@@ -1,13 +1,26 @@
-import { Component, computed, signal } from '@angular/core';
+import {Component, computed, OnInit, signal} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  addDoc,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore';
 
 type Category = {
   id: string;
   name: string;
   slug: string;
+  description?: string;
   postCount?: number;
 };
+
+type CategoryDoc = Omit<Category, 'id'>;
 
 function slugify(input: string): string {
   return input
@@ -18,44 +31,106 @@ function slugify(input: string): string {
     .replace(/-+/g, '-');
 }
 
-function uid(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
 @Component({
   selector: 'app-admin-categories-page',
   standalone: true,
   imports: [FormsModule, RouterLink],
-  templateUrl: "admin-categories.component.html"
+  templateUrl: 'admin-categories.component.html',
 })
-export class AdminCategoriesPageComponent {
-  readonly categories = signal<Category[]>([
-    { id: uid(), name: 'Living Room', slug: 'living-room', postCount: 12 },
-    { id: uid(), name: 'Bedroom', slug: 'bedroom', postCount: 8 },
-    { id: uid(), name: 'Kitchen', slug: 'kitchen', postCount: 5 },
-  ]);
+export class AdminCategoriesPageComponent implements OnInit {
+  private readonly db = getFirestore();
+  private readonly categoriesCol = collection(this.db, 'categories');
+
+  readonly categories = signal<Category[]>([]);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
   newName = '';
+  newDescription = '';
 
-  readonly canAdd = computed(() => this.newName.trim().length > 0);
+  readonly canAdd = computed(() => this.newName.trim().length > 0 && !this.loading());
 
-  add() {
-    const name = this.newName.trim();
-    if (!name) return;
-
-    const slug = slugify(name);
-
-    // prevent duplicates by slug
-    if (this.categories().some((c) => c.slug === slug)) return;
-
-    this.categories.update((list) => [
-      { id: uid(), name, slug, postCount: 0 },
-      ...list,
-    ]);
-    this.newName = '';
+  async ngOnInit() {
+    await this.fetchCategories();
   }
 
-  remove(id: string) {
-    this.categories.update((list) => list.filter((c) => c.id !== id));
+  private async fetchCategories() {
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      const q = query(this.categoriesCol, orderBy('name', 'asc'));
+      const snap = await getDocs(q);
+
+      const rows: Category[] = snap.docs.map((d) => {
+        const data = d.data() as Partial<CategoryDoc>;
+        return {
+          id: d.id,
+          name: String(data.name ?? ''),
+          slug: String(data.slug ?? ''),
+          description: typeof data.description === 'string' ? data.description : undefined,
+          postCount: typeof data.postCount === 'number' ? data.postCount : undefined,
+        };
+      });
+
+      this.categories.set(rows);
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to load categories.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async add() {
+    const name = this.newName.trim();
+    if (!name || this.loading()) return;
+
+    const descriptionRaw = this.newDescription.trim();
+    const slug = slugify(name);
+
+    // prevent duplicates by slug (client-side; keep until you add a unique constraint)
+    if (this.categories().some((c) => c.slug === slug)) return;
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      const payload: CategoryDoc = {
+        name,
+        slug,
+        description: descriptionRaw || undefined,
+        postCount: 0,
+      };
+
+      await addDoc(this.categoriesCol, payload);
+
+      this.newName = '';
+      this.newDescription = '';
+
+      this.loading.set(false);
+      await this.fetchCategories();
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to add category.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async remove(id: string) {
+    if (!id || this.loading()) return;
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      await deleteDoc(doc(this.db, 'categories', id));
+      this.loading.set(false);
+      await this.fetchCategories();
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to delete category.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 }
