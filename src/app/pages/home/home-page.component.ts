@@ -11,23 +11,7 @@ import { NewsletterSignupComponent } from '../../components/newsletter-signup/ne
 import { AboutSectionComponent } from '../../components/about-section/about-section.component';
 import {ContactSectionComponent} from '../../components/contact-section/contact-section.component';
 import {collection, getDocs, getFirestore, orderBy, query} from 'firebase/firestore';
-
-export type CategoryItem = {
-  title: string;
-  href: string;
-  description?: string;
-  imageUrl?: string;
-
-  count?: number;
-  countLabel?: string; // e.g. "articles"
-};
-
-type CategoryDoc = {
-  name?: string;
-  slug?: string;
-  description?: string;
-  postCount?: number;
-};
+import type { CategoryDoc, CategoryItem } from '../../types/category.types';
 
 @Component({
   selector: 'app-home-page',
@@ -110,7 +94,7 @@ export class HomePageComponent implements OnInit {
   private readonly _categoryItems = signal<CategoryItem[]>([]);
 
   public get categoryItems(): CategoryItem[] {
-    return this._categoryItems();
+    return this._categoryItems().slice(0, 4);
   }
 
   async ngOnInit() {
@@ -144,7 +128,7 @@ export class HomePageComponent implements OnInit {
           } as CategoryItem;
         })
         .filter((x): x is CategoryItem => !!x) as CategoryItem[];
-      console.log(mapped);
+
       this._categoryItems.set(mapped);
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to load categories.');
@@ -152,5 +136,4 @@ export class HomePageComponent implements OnInit {
       this.categoryLoading.set(false);
     }
   }
-
 }

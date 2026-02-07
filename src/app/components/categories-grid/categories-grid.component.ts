@@ -14,7 +14,7 @@ export class CategoriesGridComponent {
   @Input() title = 'Categories';
   readonly error = signal<string | null>(null);
   private readonly _items = signal<CategoryItem[]>([]);
-  protected readonly loading = signal<any | null>(true);
+  protected readonly loading = signal<boolean>(true);
   @Input() set items(value: CategoryItem[] | null | undefined) {
     this._items.set(Array.isArray(value) ? value : []);
     this.loading.set(false);
