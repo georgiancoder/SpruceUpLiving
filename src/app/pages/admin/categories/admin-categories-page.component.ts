@@ -10,6 +10,7 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  updateDoc,
 } from 'firebase/firestore';
 
 type Category = {
@@ -47,6 +48,10 @@ export class AdminCategoriesPageComponent implements OnInit {
 
   newName = '';
   newDescription = '';
+
+  readonly editingId = signal<string | null>(null);
+  editName = '';
+  editDescription = '';
 
   readonly canAdd = computed(() => this.newName.trim().length > 0 && !this.loading());
 
@@ -129,6 +134,50 @@ export class AdminCategoriesPageComponent implements OnInit {
       await this.fetchCategories();
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to delete category.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  startEdit(c: Category) {
+    this.editingId.set(c.id);
+    this.editName = c.name ?? '';
+    this.editDescription = c.description ?? '';
+  }
+
+  cancelEdit() {
+    this.editingId.set(null);
+    this.editName = '';
+    this.editDescription = '';
+  }
+
+  async saveEdit(id: string) {
+    if (!id || this.loading()) return;
+
+    const name = this.editName.trim();
+    if (!name) return;
+
+    const description = this.editDescription.trim() || undefined;
+    const slug = slugify(name);
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      // prevent duplicates by slug (excluding self)
+      if (this.categories().some((c) => c.id !== id && c.slug === slug)) return;
+
+      await updateDoc(doc(this.db, 'categories', id), {
+        name,
+        slug,
+        description,
+      });
+
+      this.cancelEdit();
+      this.loading.set(false);
+      await this.fetchCategories();
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to update category.');
     } finally {
       this.loading.set(false);
     }
