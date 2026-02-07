@@ -1,14 +1,5 @@
-import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
-
-export type CategoryItem = {
-  title: string;
-  href: string;
-  description?: string;
-  imageUrl?: string;
-
-  count?: number;
-  countLabel?: string; // e.g. "articles"
-};
+import {Component, ChangeDetectionStrategy, Input, signal} from '@angular/core';
+import type { CategoryItem } from '../../types/category.types';
 
 @Component({
   selector: 'app-categories-grid',
@@ -18,27 +9,17 @@ export type CategoryItem = {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoriesGridComponent {
+
+
   @Input() title = 'Categories';
-  @Input() items: CategoryItem[] = [
-    {
-      title: 'Organization',
-      description: 'Storage, routines, and declutter ideas.',
-      href: '/categories/organization'
-    },
-    {
-      title: 'Comfort',
-      description: 'Cozy lighting, textures, and mood.',
-      href: '/categories/comfort'
-    },
-    {
-      title: 'Cleaning',
-      description: 'Simple systems that keep things fresh.',
-      href: '/categories/cleaning'
-    },
-    {
-      title: 'Decor',
-      description: 'Small upgrades with big impact.',
-      href: '/categories/decor'
-    }
-  ];
+  readonly error = signal<string | null>(null);
+  private readonly _items = signal<CategoryItem[]>([]);
+  protected readonly loading = signal<any | null>(true);
+  @Input() set items(value: CategoryItem[] | null | undefined) {
+    this._items.set(Array.isArray(value) ? value : []);
+    this.loading.set(false);
+  }
+  get items(): CategoryItem[] {
+    return this._items();
+  }
 }
