@@ -12,6 +12,7 @@ import { AboutSectionComponent } from '../../components/about-section/about-sect
 import {ContactSectionComponent} from '../../components/contact-section/contact-section.component';
 import {collection, getDocs, getFirestore, orderBy, query} from 'firebase/firestore';
 import type { CategoryDoc, CategoryItem } from '../../types/category.types';
+import { fetchLatestPostsOrderedByCreatedAtDesc } from '../../services/posts.firestore';
 
 @Component({
   selector: 'app-home-page',
@@ -56,36 +57,9 @@ export class HomePageComponent implements OnInit {
     }
   ];
 
-  protected readonly latestPosts: LatestPost[] = [
-    {
-      title: '5 quick wins for a cleaner entryway',
-      excerpt: 'Simple hooks, trays, and routines that reduce clutter fast.',
-      href: '/posts/entryway-quick-wins',
-      dateLabel: 'Feb 2026',
-      tag: 'Organization'
-    },
-    {
-      title: 'Lighting swaps that instantly feel cozier',
-      excerpt: 'Warm bulbs, layered lamps, and placement tips for calm evenings.',
-      href: '/posts/cozy-lighting-swaps',
-      dateLabel: 'Jan 2026',
-      tag: 'Comfort'
-    },
-    {
-      title: 'Small-space storage ideas that actually work',
-      excerpt: 'Vertical space, under-bed zones, and flexible organizers.',
-      href: '/posts/small-space-storage',
-      dateLabel: 'Dec 2025',
-      tag: 'Storage'
-    },
-    {
-      title: 'Weekend reset: a 30-minute room refresh',
-      excerpt: 'A quick checklist to make your space feel new without a big clean.',
-      href: '/posts/weekend-reset-30-min',
-      dateLabel: 'Nov 2025',
-      tag: 'Routines'
-    }
-  ];
+  // fetched from Firestore
+  readonly latestPosts = signal<LatestPost[]>([]);
+
   private readonly db = getFirestore();
 
   readonly categoryLoading = signal(false);
@@ -98,7 +72,18 @@ export class HomePageComponent implements OnInit {
   }
 
   async ngOnInit() {
-    await this.fetchCategories();
+    await Promise.all([
+      this.fetchCategories(),
+      this.fetchLatestPosts(),
+    ]);
+  }
+
+  private async fetchLatestPosts() {
+    try {
+      this.latestPosts.set(await fetchLatestPostsOrderedByCreatedAtDesc(this.db, 4));
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to load posts.');
+    }
   }
 
   private async fetchCategories() {

@@ -7,28 +7,14 @@ import {
   deleteDoc,
   doc,
   getDoc,
-  getDocs,
   getFirestore,
   increment,
-  orderBy,
-  query,
   writeBatch,
   updateDoc,
 } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
-
-type AdminPost = {
-  id: string;
-  title: string;
-  description: string;
-  content: string;
-  created_at: string; // ISO string
-  main_img: string;
-  main_img_path?: string; // Firebase Storage path for deletion
-  category_ids: string[];
-  tags: { title: string }[] | string[]; // support both array of strings and array of objects with title
-};
+import { fetchPostsOrderedByCreatedAtDesc, type AdminPost } from '../../../services/posts.firestore';
 
 @Component({
   selector: 'app-admin-posts-page',
@@ -122,25 +108,7 @@ export class AdminPostsPageComponent implements OnInit {
     this.error.set(null);
 
     try {
-      const q = query(collection(this.db, 'posts'), orderBy('created_at', 'desc'));
-      const snap = await getDocs(q);
-
-      const items: AdminPost[] = snap.docs.map(d => {
-        const data: any = d.data();
-        return {
-          id: d.id,
-          title: String(data?.title ?? ''),
-          description: String(data?.description ?? ''),
-          content: String(data?.content ?? ''),
-          created_at: String(data?.created_at ?? ''),
-          main_img: String(data?.main_img ?? ''),
-          main_img_path: data?.main_img_path ? String(data.main_img_path) : undefined,
-          category_ids: Array.isArray(data?.category_ids) ? data.category_ids.map(String) : [],
-          tags: Array.isArray(data?.tags) ? data.tags.map(String) : []
-        };
-      });
-
-      this.posts.set(items);
+      this.posts.set(await fetchPostsOrderedByCreatedAtDesc(this.db));
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to load posts');
     } finally {
