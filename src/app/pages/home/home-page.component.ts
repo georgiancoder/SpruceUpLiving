@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import {Component, ChangeDetectionStrategy, signal, Input, OnInit} from '@angular/core';
 import { HeroSliderComponent, type HeroSlide } from '../../components/hero-slider/hero-slider.component';
 import {
   LatestPostsComponent,
@@ -6,11 +6,12 @@ import {
 } from '../../components/latest-posts/latest-posts.component';
 import {
   CategoriesGridComponent,
-  type CategoryItem
 } from '../../components/categories-grid/categories-grid.component';
 import { NewsletterSignupComponent } from '../../components/newsletter-signup/newsletter-signup.component';
 import { AboutSectionComponent } from '../../components/about-section/about-section.component';
 import {ContactSectionComponent} from '../../components/contact-section/contact-section.component';
+import {collection, getDocs, getFirestore, orderBy, query} from 'firebase/firestore';
+import type { CategoryDoc, CategoryItem } from '../../types/category.types';
 
 @Component({
   selector: 'app-home-page',
@@ -27,7 +28,7 @@ import {ContactSectionComponent} from '../../components/contact-section/contact-
   styleUrl: './home-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HomePageComponent {
+export class HomePageComponent implements OnInit {
   protected readonly heroSlides: HeroSlide[] = [
     {
       title: 'Refresh your space, effortlessly',
@@ -85,35 +86,54 @@ export class HomePageComponent {
       tag: 'Routines'
     }
   ];
+  private readonly db = getFirestore();
 
-  protected readonly categories: CategoryItem[] = [
-    {
-      title: 'Home Improvement',
-      description: 'Weekend projects, repairs, and simple upgrades you can tackle yourself.',
-      href: '/categories/home-improvement',
-      count: 24,
-      countLabel: 'articles'
-    },
-    {
-      title: 'Organization',
-      description: 'Storage, routines, and declutter ideas.',
-      href: '/categories/organization',
-      count: 18,
-      countLabel: 'articles'
-    },
-    {
-      title: 'Comfort',
-      description: 'Cozy lighting, textures, and mood.',
-      href: '/categories/comfort',
-      count: 12,
-      countLabel: 'articles'
-    },
-    {
-      title: 'Decor',
-      description: 'Small upgrades with big impact.',
-      href: '/categories/decor',
-      count: 16,
-      countLabel: 'articles'
+  readonly categoryLoading = signal(false);
+  readonly error = signal<string | null>(null);
+
+  private readonly _categoryItems = signal<CategoryItem[]>([]);
+
+  public get categoryItems(): CategoryItem[] {
+    return this._categoryItems().slice(0, 4);
+  }
+
+  async ngOnInit() {
+    await this.fetchCategories();
+  }
+
+  private async fetchCategories() {
+    if (this.categoryLoading()) return;
+    this.categoryLoading.set(true);
+    this.error.set(null);
+
+    try {
+      const colRef = collection(this.db, 'categories');
+      const q = query(colRef, orderBy('name', 'asc'));
+      const snap = await getDocs(q);
+
+      const mapped = snap.docs
+        .map((d) => {
+          const data = d.data() as CategoryDoc;
+          const name = (data.name ?? '').toString().trim();
+          const slug = (data.slug ?? '').toString().trim();
+
+          if (!name || !slug) return null;
+
+          return {
+            title: name,
+            href: `/categories/${slug}`,
+            description: typeof data.description === 'string' ? data.description : undefined,
+            count: typeof data.postCount === 'number' ? data.postCount : undefined,
+            countLabel: 'articles',
+          } as CategoryItem;
+        })
+        .filter((x): x is CategoryItem => !!x) as CategoryItem[];
+
+      this._categoryItems.set(mapped);
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to load categories.');
+    } finally {
+      this.categoryLoading.set(false);
     }
-  ];
+  }
 }
