@@ -194,15 +194,44 @@
           @for (p of posts(); track p.id) {
             <tr class="text-slate-800 align-top">
               <td class="px-4 py-3">
-                <div class="font-medium text-slate-900">{{ p.title }}</div>
-                @if (p.description) {
-                  <div class="mt-0.5 line-clamp-1 text-xs text-slate-500">{{ p.description }}</div>
-                }
-                @if (p.main_img) {
-                  <a class="mt-1 block text-xs text-slate-700 underline" [href]="p.main_img" target="_blank" rel="noreferrer">
-                    main_img
-                  </a>
-                }
+                <div class="flex gap-3">
+                  @if (p.main_img) {
+                    <a
+                      class="mt-0.5 shrink-0"
+                      [href]="p.main_img"
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Open image"
+                    >
+                      <img
+                        class="h-12 w-12 rounded-lg object-cover ring-1 ring-slate-200"
+                        [src]="p.main_img"
+                        [alt]="p.title ? (p.title + ' image') : 'Post image'"
+                        loading="lazy"
+                        referrerpolicy="no-referrer"
+                      />
+                    </a>
+                  }
+
+                  <div class="min-w-0">
+                    <div class="font-medium text-slate-900">{{ p.title }}</div>
+
+                    @if (p.description) {
+                      <div class="mt-0.5 line-clamp-1 text-xs text-slate-500">{{ p.description }}</div>
+                    }
+
+                    @if (p.main_img) {
+                      <a
+                        class="mt-1 block text-[11px] text-slate-600 underline"
+                        [href]="p.main_img"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        View image
+                      </a>
+                    }
+                  </div>
+                </div>
               </td>
 
               <td class="px-4 py-3 text-xs text-slate-600">

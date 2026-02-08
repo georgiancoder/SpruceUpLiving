@@ -14,7 +14,7 @@ import {
   query,
   writeBatch,
 } from 'firebase/firestore';
-import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
 
 type AdminPost = {
@@ -24,6 +24,7 @@ type AdminPost = {
   content: string;
   created_at: string; // ISO string
   main_img: string;
+  main_img_path?: string; // Firebase Storage path for deletion
   category_ids: string[];
   tags: { title: string }[] | string[]; // support both array of strings and array of objects with title
 };
@@ -121,6 +122,7 @@ export class AdminPostsPageComponent implements OnInit {
           content: String(data?.content ?? ''),
           created_at: String(data?.created_at ?? ''),
           main_img: String(data?.main_img ?? ''),
+          main_img_path: data?.main_img_path ? String(data.main_img_path) : undefined,
           category_ids: Array.isArray(data?.category_ids) ? data.category_ids.map(String) : [],
           tags: Array.isArray(data?.tags) ? data.tags.map(String) : []
         };
@@ -173,11 +175,13 @@ export class AdminPostsPageComponent implements OnInit {
     try {
       // upload image (optional)
       let main_img = '';
+      let main_img_path: string | undefined;
+
       const file = this.mainImgFile();
       if (file) {
         const safeName = (file.name || 'image').replace(/[^\w.\-]+/g, '_');
-        const path = `posts/${Date.now()}_${crypto.randomUUID()}_${safeName}`;
-        const storageRef = ref(this.storage, path);
+        main_img_path = `posts/${Date.now()}_${crypto.randomUUID()}_${safeName}`;
+        const storageRef = ref(this.storage, main_img_path);
         await uploadBytes(storageRef, file, { contentType: file.type || undefined });
         main_img = await getDownloadURL(storageRef);
       }
@@ -188,6 +192,7 @@ export class AdminPostsPageComponent implements OnInit {
         content,
         created_at: this.localToIso(this.createdAtLocal()),
         main_img,
+        ...(main_img_path ? { main_img_path } : {}),
         category_ids: categoryIds,
         tags: this.selectedTags(),
       };
@@ -236,13 +241,26 @@ export class AdminPostsPageComponent implements OnInit {
     this.error.set(null);
 
     try {
-      // read before delete so we know which counters to decrement
+      // read before delete so we know which counters to decrement + which image to delete
       const postRef = doc(this.db, 'posts', id);
       const snap = await getDoc(postRef);
       const data: any = snap.exists() ? snap.data() : null;
+
       const categoryIds = Array.from(
         new Set(Array.isArray(data?.category_ids) ? data.category_ids.map(String) : [])
       ).filter(Boolean);
+
+      const mainImgPath = data?.main_img_path ? String(data.main_img_path) : '';
+
+      // best-effort: delete storage object first (if we have a path)
+      if (mainImgPath) {
+        try {
+          await deleteObject(ref(this.storage, mainImgPath));
+        } catch (e: any) {
+          // continue deleting the post doc; just show a warning
+          this.error.set(e?.message ?? 'Failed to delete post image from storage (post will still be deleted)');
+        }
+      }
 
       await deleteDoc(postRef);
 
@@ -252,8 +270,8 @@ export class AdminPostsPageComponent implements OnInit {
           const batch = writeBatch(this.db);
           for (const cid of categoryIds) {
             const ref = doc(this.db, 'categories', cid as string);
-            batch.set(ref, { postCount: increment(-1)}, { merge: true });
-            batch.update(ref, { });
+            batch.set(ref, { postCount: increment(-1) }, { merge: true });
+            batch.update(ref, {});
           }
           await batch.commit();
           this.loading.set(false);
