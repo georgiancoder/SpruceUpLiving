@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
@@ -21,7 +21,7 @@ type AdminPost = {
   created_at: string; // ISO string
   main_img: string;
   category_ids: string[];
-  tags: string[];
+  tags: { title: string }[] | string[]; // support both array of strings and array of objects with title
 };
 
 @Component({
@@ -58,6 +58,14 @@ export class AdminPostsPageComponent implements OnInit {
 
   // category select helpers
   readonly selectedCategoryIds = signal<string[]>([]);
+
+  readonly canAddPost = computed(() => {
+    return (
+      this.title().trim().length > 0 &&
+      this.description().trim().length > 0 &&
+      this.content().trim().length > 0
+    );
+  });
 
   ngOnInit(): void {
     void this.fetchPosts();
@@ -200,5 +208,10 @@ export class AdminPostsPageComponent implements OnInit {
 
   fillCreatedNow() {
     this.createdAtLocal.set(this.isoToLocalInput(new Date().toISOString()));
+  }
+
+  protected onTagsCsvChange( value: string) {
+    const tags = this.parseCsv(value);
+    this.selectedTags.set(tags);
   }
 }
