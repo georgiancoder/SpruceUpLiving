@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   addDoc,
   collection,
@@ -26,7 +27,7 @@ type AdminPost = {
 @Component({
   selector: 'app-admin-posts-page',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: 'admin-posts.component.html'
 })
 export class AdminPostsPageComponent implements OnInit {
