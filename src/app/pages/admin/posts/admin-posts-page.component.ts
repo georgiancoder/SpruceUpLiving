@@ -9,7 +9,10 @@ import {
   getDocs,
   getFirestore,
   orderBy,
-  query
+  query,
+  writeBatch,
+  increment,
+  setDoc
 } from 'firebase/firestore';
 import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
 
@@ -157,13 +160,15 @@ export class AdminPostsPageComponent implements OnInit {
     if (!description) return this.error.set('Description is required.');
     if (!content) return this.error.set('Content is required.');
 
+    const categoryIds = Array.from(new Set(this.parseCsv(this.categoryIdsCsv()))).filter(Boolean);
+
     const payload = {
       title,
       description,
       content,
       created_at: this.localToIso(this.createdAtLocal()),
       main_img,
-      category_ids: this.parseCsv(this.categoryIdsCsv()),
+      category_ids: categoryIds,
       tags: this.selectedTags()
     };
 
@@ -171,6 +176,24 @@ export class AdminPostsPageComponent implements OnInit {
     this.error.set(null);
     try {
       await addDoc(collection(this.db, 'posts'), payload);
+
+      // best-effort: bump postCount for each category referenced by the new post
+      try {
+        if (categoryIds.length) {
+          const batch = writeBatch(this.db);
+          for (const cid of categoryIds) {
+            const ref = doc(this.db, 'categories', cid);
+            // ensures doc exists (no-op if it already does) so increment isn't applied to a missing doc
+            batch.set(ref, { postCount: increment(1) }, { merge: true });
+            batch.update(ref, {});
+          }
+          await batch.commit();
+          void this.fetchCategories();
+        }
+      } catch (e: any) {
+        // post was created; counter update failed
+        this.error.set(e?.message ?? 'Post created, but failed to update category postCount');
+      }
 
       // reset form
       this.title.set('');
