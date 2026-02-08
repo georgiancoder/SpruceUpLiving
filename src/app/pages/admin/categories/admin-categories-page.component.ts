@@ -3,15 +3,19 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
   getFirestore,
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc,
+  // collection,
+  // addDoc,
+  // deleteDoc,
+  // doc,
+  // updateDoc,
 } from 'firebase/firestore';
+import {
+  addCategory,
+  fetchCategoriesOrderedByName,
+  removeCategory,
+  updateCategory,
+  type CategoryDoc,
+} from '../../../services/categories.firestore';
 
 type Category = {
   id: string;
@@ -21,7 +25,7 @@ type Category = {
   postCount?: number;
 };
 
-type CategoryDoc = Omit<Category, 'id'>;
+// type CategoryDoc = Omit<Category, 'id'>; // moved to service
 
 function slugify(input: string): string {
   return input
@@ -40,7 +44,7 @@ function slugify(input: string): string {
 })
 export class AdminCategoriesPageComponent implements OnInit {
   private readonly db = getFirestore();
-  private readonly categoriesCol = collection(this.db, 'categories');
+  // private readonly categoriesCol = collection(this.db, 'categories');
 
   readonly categories = signal<Category[]>([]);
   readonly loading = signal(false);
@@ -65,21 +69,7 @@ export class AdminCategoriesPageComponent implements OnInit {
     this.error.set(null);
 
     try {
-      const q = query(this.categoriesCol, orderBy('name', 'asc'));
-      const snap = await getDocs(q);
-
-      const rows: Category[] = snap.docs.map((d) => {
-        const data = d.data() as Partial<CategoryDoc>;
-        return {
-          id: d.id,
-          name: String(data.name ?? ''),
-          slug: String(data.slug ?? ''),
-          description: typeof data.description === 'string' ? data.description : undefined,
-          postCount: typeof data.postCount === 'number' ? data.postCount : undefined,
-        };
-      });
-
-      this.categories.set(rows);
+      this.categories.set(await fetchCategoriesOrderedByName(this.db));
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to load categories.');
     } finally {
@@ -108,11 +98,10 @@ export class AdminCategoriesPageComponent implements OnInit {
         postCount: 0,
       };
 
-      await addDoc(this.categoriesCol, payload);
+      await addCategory(this.db, payload);
 
       this.newName = '';
       this.newDescription = '';
-
       this.loading.set(false);
       await this.fetchCategories();
     } catch (e: any) {
@@ -129,7 +118,7 @@ export class AdminCategoriesPageComponent implements OnInit {
     this.error.set(null);
 
     try {
-      await deleteDoc(doc(this.db, 'categories', id));
+      await removeCategory(this.db, id);
       this.loading.set(false);
       await this.fetchCategories();
     } catch (e: any) {
@@ -167,11 +156,7 @@ export class AdminCategoriesPageComponent implements OnInit {
       // prevent duplicates by slug (excluding self)
       if (this.categories().some((c) => c.id !== id && c.slug === slug)) return;
 
-      await updateDoc(doc(this.db, 'categories', id), {
-        name,
-        slug,
-        description,
-      });
+      await updateCategory(this.db, id, { name, slug, description });
 
       this.cancelEdit();
       this.loading.set(false);
