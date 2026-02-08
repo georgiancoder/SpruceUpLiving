@@ -42,13 +42,35 @@
       </div>
 
       <div class="sm:col-span-2">
-        <label class="block text-xs font-medium text-slate-600">main_img</label>
+        <label class="block text-xs font-medium text-slate-600">main_img (upload)</label>
         <input
-          class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
-          [value]="mainImg()"
-          (input)="mainImg.set(($any($event.target).value))"
-          placeholder="https://..."
+          #mainImgInput
+          type="file"
+          accept="image/*"
+          class="mt-1 block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-slate-800 disabled:opacity-50"
+          (change)="onMainImgSelected($any($event.target))"
+          [disabled]="loading()"
         />
+
+        @if (mainImgPreviewUrl()) {
+          <div class="mt-2 flex items-center gap-3">
+            <img
+              class="h-12 w-12 rounded-lg object-cover ring-1 ring-slate-200"
+              [src]="mainImgPreviewUrl()!"
+              alt="Selected main image preview"
+            />
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
+              (click)="clearMainImg(mainImgInput)"
+              [disabled]="loading()"
+            >
+              Clear image
+            </button>
+          </div>
+        } @else {
+          <div class="mt-1 text-[11px] text-slate-500">Image is optional; if set it will be uploaded and saved as a URL.</div>
+        }
       </div>
 
       <div class="sm:col-span-2">
@@ -126,7 +148,7 @@
         <button
           type="button"
           class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
-          (click)="title.set(''); description.set(''); content.set(''); createdAtLocal.set(''); mainImg.set(''); categoryIdsCsv.set(''); tagsCsv.set(''); error.set(null)"
+          (click)="title.set(''); description.set(''); content.set(''); createdAtLocal.set(''); clearMainImg(mainImgInput); categoryIdsCsv.set(''); tagsCsv.set(''); error.set(null)"
           [disabled]="loading()"
         >
           Clear
@@ -172,46 +194,173 @@
           @for (p of posts(); track p.id) {
             <tr class="text-slate-800 align-top">
               <td class="px-4 py-3">
-                <div class="font-medium text-slate-900">{{ p.title }}</div>
-                @if (p.description) {
-                  <div class="mt-0.5 line-clamp-1 text-xs text-slate-500">{{ p.description }}</div>
-                }
-                @if (p.main_img) {
-                  <a class="mt-1 block text-xs text-slate-700 underline" [href]="p.main_img" target="_blank" rel="noreferrer">
-                    main_img
-                  </a>
+                @if (editingPostId() === p.id) {
+                  <div class="space-y-2">
+                    <div class="grid grid-cols-1 gap-2">
+                      <input
+                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+                        [value]="editTitle()"
+                        (input)="editTitle.set(($any($event.target).value))"
+                        placeholder="title"
+                      />
+                      <input
+                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+                        [value]="editDescription()"
+                        (input)="editDescription.set(($any($event.target).value))"
+                        placeholder="description"
+                      />
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600">Replace image (optional)</label>
+                      <input
+                        #editImgInput
+                        type="file"
+                        accept="image/*"
+                        class="mt-1 block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-slate-800 disabled:opacity-50"
+                        (change)="onEditMainImgSelected($any($event.target))"
+                        [disabled]="loading()"
+                      />
+                      @if (editMainImgPreviewUrl()) {
+                        <div class="mt-2 flex items-center gap-3">
+                          <img class="h-10 w-10 rounded-lg object-cover ring-1 ring-slate-200" [src]="editMainImgPreviewUrl()!" alt="New image preview" />
+                          <button
+                            type="button"
+                            class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-50"
+                            (click)="clearEditMainImg(editImgInput)"
+                            [disabled]="loading()"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      }
+                    </div>
+
+                    <textarea
+                      rows="4"
+                      class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+                      [value]="editContent()"
+                      (input)="editContent.set(($any($event.target).value))"
+                      placeholder="content"
+                    ></textarea>
+                  </div>
+                } @else {
+                  <div class="flex gap-3">
+                    @if (p.main_img) {
+                      <a class="mt-0.5 shrink-0" [href]="p.main_img" target="_blank" rel="noreferrer" title="Open image">
+                        <img
+                          class="h-12 w-12 rounded-lg object-cover ring-1 ring-slate-200"
+                          [src]="p.main_img"
+                          [alt]="p.title ? (p.title + ' image') : 'Post image'"
+                          loading="lazy"
+                          referrerpolicy="no-referrer"
+                        />
+                      </a>
+                    }
+                    <div class="min-w-0">
+                      <div class="font-medium text-slate-900">{{ p.title }}</div>
+                      @if (p.description) {
+                        <div class="mt-0.5 line-clamp-1 text-xs text-slate-500">{{ p.description }}</div>
+                      }
+                      @if (p.main_img) {
+                        <a class="mt-1 block text-[11px] text-slate-600 underline" [href]="p.main_img" target="_blank" rel="noreferrer">View image</a>
+                      }
+                    </div>
+                  </div>
                 }
               </td>
 
               <td class="px-4 py-3 text-xs text-slate-600">
-                {{ p.created_at ? (p.created_at | date: 'medium') : '—' }}
+                @if (editingPostId() === p.id) {
+                  <input
+                    type="datetime-local"
+                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-slate-400"
+                    [value]="editCreatedAtLocal()"
+                    (input)="editCreatedAtLocal.set(($any($event.target).value))"
+                  />
+                } @else {
+                  {{ p.created_at ? (p.created_at | date: 'medium') : '—' }}
+                }
               </td>
 
               <td class="px-4 py-3">
-                <div class="flex flex-wrap gap-1">
-                  @for (cid of p.category_ids; track cid) {
-                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{{ cid }}</span>
-                  }
-                </div>
+                @if (editingPostId() === p.id) {
+                  <select
+                    multiple
+                    class="h-28 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-slate-400"
+                    (change)="onEditCategoryIdsChange($any($event.target).selectedOptions)"
+                    [disabled]="loading() || categoriesLoading()"
+                  >
+                    @for (c of categories(); track c.id) {
+                      <option [value]="c.id" [selected]="editSelectedCategoryIds().includes(c.id)">{{ c.name }}</option>
+                    }
+                  </select>
+                } @else {
+                  <div class="flex flex-wrap gap-1">
+                    @for (cid of p.category_ids; track cid) {
+                      <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{{ cid }}</span>
+                    }
+                  </div>
+                }
               </td>
 
               <td class="px-4 py-3">
-                <div class="flex flex-wrap gap-1">
-                  @for (t of p.tags; track t) {
-                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{{ t }}</span>
-                  }
-                </div>
+                @if (editingPostId() === p.id) {
+                  <input
+                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-slate-400"
+                    [value]="editSelectedTags().join(', ')"
+                    (change)="onTagsChange(($any($event.target).value || ''))"
+                    placeholder="tag1, tag2"
+                  />
+                } @else {
+                  <div class="flex flex-wrap gap-1">
+                    @for (t of p.tags; track t) {
+                      <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{{ t }}</span>
+                    }
+                  </div>
+                }
               </td>
 
               <td class="px-4 py-3 text-right">
-                <button
-                  type="button"
-                  class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
-                  (click)="removePost(p.id)"
-                  [disabled]="loading()"
-                >
-                  Delete
-                </button>
+                @if (editingPostId() === p.id) {
+                  <div class="inline-flex gap-2">
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                      (click)="saveEdit(p.id)"
+                      [disabled]="loading()"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
+                      (click)="cancelEdit()"
+                      [disabled]="loading()"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                } @else {
+                  <div class="inline-flex gap-2">
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
+                      (click)="startEdit(p)"
+                      [disabled]="loading()"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                      (click)="removePost(p.id)"
+                      [disabled]="loading()"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                }
               </td>
             </tr>
           } @empty {
