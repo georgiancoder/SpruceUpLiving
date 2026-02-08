@@ -6,13 +6,13 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   getFirestore,
+  increment,
   orderBy,
   query,
   writeBatch,
-  increment,
-  setDoc
 } from 'firebase/firestore';
 import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
 
@@ -191,7 +191,6 @@ export class AdminPostsPageComponent implements OnInit {
           void this.fetchCategories();
         }
       } catch (e: any) {
-        // post was created; counter update failed
         this.error.set(e?.message ?? 'Post created, but failed to update category postCount');
       }
 
@@ -219,8 +218,33 @@ export class AdminPostsPageComponent implements OnInit {
     this.error.set(null);
 
     try {
-      await deleteDoc(doc(this.db, 'posts', id));
-      this.loading.set(false);
+      // read before delete so we know which counters to decrement
+      const postRef = doc(this.db, 'posts', id);
+      const snap = await getDoc(postRef);
+      const data: any = snap.exists() ? snap.data() : null;
+      const categoryIds = Array.from(
+        new Set(Array.isArray(data?.category_ids) ? data.category_ids.map(String) : [])
+      ).filter(Boolean);
+
+      await deleteDoc(postRef);
+
+      // best-effort: decrement postCount for each category referenced by the deleted post
+      try {
+        if (categoryIds.length) {
+          const batch = writeBatch(this.db);
+          for (const cid of categoryIds) {
+            const ref = doc(this.db, 'categories', cid as string);
+            batch.set(ref, { postCount: increment(-1)}, { merge: true });
+            batch.update(ref, { });
+          }
+          await batch.commit();
+          this.loading.set(false);
+          void this.fetchCategories();
+        }
+      } catch (e: any) {
+        this.error.set(e?.message ?? 'Post deleted, but failed to update category postCount');
+      }
+
       await this.fetchPosts();
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to delete post');
