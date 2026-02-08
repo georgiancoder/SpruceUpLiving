@@ -42,13 +42,35 @@
       </div>
 
       <div class="sm:col-span-2">
-        <label class="block text-xs font-medium text-slate-600">main_img</label>
+        <label class="block text-xs font-medium text-slate-600">main_img (upload)</label>
         <input
-          class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
-          [value]="mainImg()"
-          (input)="mainImg.set(($any($event.target).value))"
-          placeholder="https://..."
+          #mainImgInput
+          type="file"
+          accept="image/*"
+          class="mt-1 block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-slate-800 disabled:opacity-50"
+          (change)="onMainImgSelected($any($event.target))"
+          [disabled]="loading()"
         />
+
+        @if (mainImgPreviewUrl()) {
+          <div class="mt-2 flex items-center gap-3">
+            <img
+              class="h-12 w-12 rounded-lg object-cover ring-1 ring-slate-200"
+              [src]="mainImgPreviewUrl()!"
+              alt="Selected main image preview"
+            />
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
+              (click)="clearMainImg(mainImgInput)"
+              [disabled]="loading()"
+            >
+              Clear image
+            </button>
+          </div>
+        } @else {
+          <div class="mt-1 text-[11px] text-slate-500">Image is optional; if set it will be uploaded and saved as a URL.</div>
+        }
       </div>
 
       <div class="sm:col-span-2">
@@ -126,7 +148,7 @@
         <button
           type="button"
           class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
-          (click)="title.set(''); description.set(''); content.set(''); createdAtLocal.set(''); mainImg.set(''); categoryIdsCsv.set(''); tagsCsv.set(''); error.set(null)"
+          (click)="title.set(''); description.set(''); content.set(''); createdAtLocal.set(''); clearMainImg(mainImgInput); categoryIdsCsv.set(''); tagsCsv.set(''); error.set(null)"
           [disabled]="loading()"
         >
           Clear

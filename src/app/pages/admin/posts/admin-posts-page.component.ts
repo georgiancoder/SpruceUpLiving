@@ -14,6 +14,7 @@ import {
   query,
   writeBatch,
 } from 'firebase/firestore';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
 
 type AdminPost = {
@@ -35,6 +36,7 @@ type AdminPost = {
 })
 export class AdminPostsPageComponent implements OnInit {
   private readonly db = getFirestore();
+  private readonly storage = getStorage();
 
   readonly posts = signal<AdminPost[]>([]);
   readonly loading = signal<boolean>(false);
@@ -61,6 +63,10 @@ export class AdminPostsPageComponent implements OnInit {
 
   // category select helpers
   readonly selectedCategoryIds = signal<string[]>([]);
+
+  // main image upload (store URL in main_img)
+  readonly mainImgFile = signal<File | null>(null);
+  readonly mainImgPreviewUrl = signal<string | null>(null);
 
   readonly canAddPost = computed(() => {
     return (
@@ -154,7 +160,6 @@ export class AdminPostsPageComponent implements OnInit {
     const title = this.title().trim();
     const description = this.description().trim();
     const content = this.content().trim();
-    const main_img = this.mainImg().trim();
 
     if (!title) return this.error.set('Title is required.');
     if (!description) return this.error.set('Description is required.');
@@ -162,19 +167,31 @@ export class AdminPostsPageComponent implements OnInit {
 
     const categoryIds = Array.from(new Set(this.parseCsv(this.categoryIdsCsv()))).filter(Boolean);
 
-    const payload = {
-      title,
-      description,
-      content,
-      created_at: this.localToIso(this.createdAtLocal()),
-      main_img,
-      category_ids: categoryIds,
-      tags: this.selectedTags()
-    };
-
     this.loading.set(true);
     this.error.set(null);
+
     try {
+      // upload image (optional)
+      let main_img = '';
+      const file = this.mainImgFile();
+      if (file) {
+        const safeName = (file.name || 'image').replace(/[^\w.\-]+/g, '_');
+        const path = `posts/${Date.now()}_${crypto.randomUUID()}_${safeName}`;
+        const storageRef = ref(this.storage, path);
+        await uploadBytes(storageRef, file, { contentType: file.type || undefined });
+        main_img = await getDownloadURL(storageRef);
+      }
+
+      const payload = {
+        title,
+        description,
+        content,
+        created_at: this.localToIso(this.createdAtLocal()),
+        main_img,
+        category_ids: categoryIds,
+        tags: this.selectedTags(),
+      };
+
       await addDoc(collection(this.db, 'posts'), payload);
 
       // best-effort: bump postCount for each category referenced by the new post
@@ -199,7 +216,8 @@ export class AdminPostsPageComponent implements OnInit {
       this.description.set('');
       this.content.set('');
       this.createdAtLocal.set('');
-      this.mainImg.set('');
+      this.mainImgFile.set(null);
+      this.mainImgPreviewUrl.set(null);
       this.categoryIdsCsv.set('');
       this.selectedCategoryIds.set([]);
       this.selectedTags.set([]);
@@ -260,5 +278,23 @@ export class AdminPostsPageComponent implements OnInit {
   protected onTagsCsvChange( value: string) {
     const tags = this.parseCsv(value);
     this.selectedTags.set(tags);
+  }
+
+  onMainImgSelected(input: HTMLInputElement) {
+    const file = input.files?.[0] ?? null;
+    this.mainImgFile.set(file);
+
+    const prev = this.mainImgPreviewUrl();
+    if (prev) URL.revokeObjectURL(prev);
+
+    this.mainImgPreviewUrl.set(file ? URL.createObjectURL(file) : null);
+  }
+
+  clearMainImg(input?: HTMLInputElement) {
+    this.mainImgFile.set(null);
+    const prev = this.mainImgPreviewUrl();
+    if (prev) URL.revokeObjectURL(prev);
+    this.mainImgPreviewUrl.set(null);
+    if (input) input.value = '';
   }
 }
