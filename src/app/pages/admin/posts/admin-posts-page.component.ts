@@ -10,6 +10,7 @@ import {
   orderBy,
   query
 } from 'firebase/firestore';
+import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
 
 type AdminPost = {
   id: string;
@@ -50,8 +51,16 @@ export class AdminPostsPageComponent implements OnInit {
   readonly availableTags = signal<string[]>(['tag1', 'tag2', 'tag3']);
   readonly selectedTags = signal<string[]>([]);
 
+  // categories (fetched)
+  readonly categories = signal<Category[]>([]);
+  readonly categoriesLoading = signal<boolean>(false);
+
+  // category select helpers
+  readonly selectedCategoryIds = signal<string[]>([]);
+
   ngOnInit(): void {
     void this.fetchPosts();
+    void this.fetchCategories();
   }
 
   private parseCsv(value: string): string[] {
@@ -107,6 +116,28 @@ export class AdminPostsPageComponent implements OnInit {
     }
   }
 
+  async fetchCategories() {
+    if (this.categoriesLoading()) return;
+    this.categoriesLoading.set(true);
+
+    try {
+      this.categories.set(await fetchCategoriesOrderedByName(this.db));
+    } catch (e: any) {
+      // keep posts errors separate; show category fetch errors in the same banner for simplicity
+      this.error.set(e?.message ?? 'Failed to load categories');
+    } finally {
+      this.categoriesLoading.set(false);
+    }
+  }
+
+  onCategoryIdsChange(selectedOptions: HTMLOptionsCollection) {
+    const ids = Array.from(selectedOptions)
+      .filter(option => option.selected)
+      .map(option => option.value);
+    this.selectedCategoryIds.set(ids);
+    this.categoryIdsCsv.set(ids.join(', '));
+  }
+
   async addPost() {
     const title = this.title().trim();
     const description = this.description().trim();
@@ -129,7 +160,6 @@ export class AdminPostsPageComponent implements OnInit {
 
     this.loading.set(true);
     this.error.set(null);
-
     try {
       await addDoc(collection(this.db, 'posts'), payload);
 
@@ -140,8 +170,9 @@ export class AdminPostsPageComponent implements OnInit {
       this.createdAtLocal.set('');
       this.mainImg.set('');
       this.categoryIdsCsv.set('');
+      this.selectedCategoryIds.set([]);
       this.selectedTags.set([]);
-
+      this.loading.set(false);
       await this.fetchPosts();
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to add post');
@@ -157,6 +188,7 @@ export class AdminPostsPageComponent implements OnInit {
 
     try {
       await deleteDoc(doc(this.db, 'posts', id));
+      this.loading.set(false);
       await this.fetchPosts();
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to delete post');

@@ -74,13 +74,32 @@
       </div>
 
       <div class="sm:col-span-3">
+        <label class="block text-xs font-medium text-slate-600">category_ids (select)</label>
+        <select
+          multiple
+          class="mt-1 h-32 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+          (change)="onCategoryIdsChange($any($event.target).selectedOptions)"
+          [disabled]="loading() || categoriesLoading()"
+        >
+          @for (c of categories(); track c.id) {
+            <option [value]="c.id" [selected]="selectedCategoryIds().includes(c.id)">{{ c.name }}</option>
+          }
+        </select>
+        <div class="mt-1 text-[11px] text-slate-500">
+          Hold Ctrl/Cmd to select multiple. (Loaded: {{ categories().length }})
+        </div>
+      </div>
+
+      <div class="sm:col-span-3">
         <label class="block text-xs font-medium text-slate-600">category_ids (comma separated)</label>
         <input
           class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
           [value]="categoryIdsCsv()"
           (input)="categoryIdsCsv.set(($any($event.target).value))"
+          [disabled]="true"
           placeholder="catId1, catId2"
         />
+        <div class="mt-1 text-[11px] text-slate-500">This field is what gets saved; the select above fills it.</div>
       </div>
 
       <div class="sm:col-span-6">
