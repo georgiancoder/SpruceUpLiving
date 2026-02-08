@@ -13,6 +13,7 @@ import {
   orderBy,
   query,
   writeBatch,
+  updateDoc,
 } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
@@ -68,6 +69,17 @@ export class AdminPostsPageComponent implements OnInit {
   // main image upload (store URL in main_img)
   readonly mainImgFile = signal<File | null>(null);
   readonly mainImgPreviewUrl = signal<string | null>(null);
+
+  // edit state
+  readonly editingPostId = signal<string | null>(null);
+  readonly editTitle = signal<string>('');
+  readonly editDescription = signal<string>('');
+  readonly editContent = signal<string>('');
+  readonly editCreatedAtLocal = signal<string>('');
+  readonly editSelectedCategoryIds = signal<string[]>([]);
+  readonly editSelectedTags = signal<string[]>([]);
+  readonly editMainImgFile = signal<File | null>(null);
+  readonly editMainImgPreviewUrl = signal<string | null>(null);
 
   readonly canAddPost = computed(() => {
     return (
@@ -314,5 +326,170 @@ export class AdminPostsPageComponent implements OnInit {
     if (prev) URL.revokeObjectURL(prev);
     this.mainImgPreviewUrl.set(null);
     if (input) input.value = '';
+  }
+
+  startEdit(p: AdminPost) {
+    this.error.set(null);
+    this.editingPostId.set(p.id);
+    this.editTitle.set(p.title ?? '');
+    this.editDescription.set(p.description ?? '');
+    this.editContent.set(p.content ?? '');
+    this.editCreatedAtLocal.set(p.created_at ? this.isoToLocalInput(p.created_at) : '');
+    this.editSelectedCategoryIds.set(Array.isArray(p.category_ids) ? [...p.category_ids] : []);
+
+    const tags = Array.isArray(p.tags) ? p.tags : [];
+    this.editSelectedTags.set(tags.map((t: any) => (typeof t === 'string' ? t : String(t?.title ?? ''))).filter(Boolean));
+
+    this.editMainImgFile.set(null);
+    const prev = this.editMainImgPreviewUrl();
+    if (prev) URL.revokeObjectURL(prev);
+    this.editMainImgPreviewUrl.set(null);
+  }
+
+  cancelEdit(editImgInput?: HTMLInputElement) {
+    this.editingPostId.set(null);
+    this.editTitle.set('');
+    this.editDescription.set('');
+    this.editContent.set('');
+    this.editCreatedAtLocal.set('');
+    this.editSelectedCategoryIds.set([]);
+    this.editSelectedTags.set([]);
+    this.editMainImgFile.set(null);
+    const prev = this.editMainImgPreviewUrl();
+    if (prev) URL.revokeObjectURL(prev);
+    this.editMainImgPreviewUrl.set(null);
+    if (editImgInput) editImgInput.value = '';
+  }
+
+  onEditCategoryIdsChange(selectedOptions: HTMLOptionsCollection) {
+    const ids = Array.from(selectedOptions)
+      .filter(o => o.selected)
+      .map(o => o.value);
+    this.editSelectedCategoryIds.set(ids);
+  }
+
+  onEditMainImgSelected(input: HTMLInputElement) {
+    const file = input.files?.[0] ?? null;
+    this.editMainImgFile.set(file);
+
+    const prev = this.editMainImgPreviewUrl();
+    if (prev) URL.revokeObjectURL(prev);
+    this.editMainImgPreviewUrl.set(file ? URL.createObjectURL(file) : null);
+  }
+
+  clearEditMainImg(input?: HTMLInputElement) {
+    this.editMainImgFile.set(null);
+    const prev = this.editMainImgPreviewUrl();
+    if (prev) URL.revokeObjectURL(prev);
+    this.editMainImgPreviewUrl.set(null);
+    if (input) input.value = '';
+  }
+
+  private setDelta(a: string[], b: string[]) {
+    const A = new Set((a ?? []).filter(Boolean));
+    const B = new Set((b ?? []).filter(Boolean));
+    const toAdd: string[] = [];
+    const toRemove: string[] = [];
+    for (const x of B) if (!A.has(x)) toAdd.push(x);
+    for (const x of A) if (!B.has(x)) toRemove.push(x);
+    return { toAdd, toRemove };
+  }
+
+  async saveEdit(postId: string) {
+    if (!postId) return;
+
+    const title = this.editTitle().trim();
+    const description = this.editDescription().trim();
+    const content = this.editContent().trim();
+
+    if (!title) return this.error.set('Title is required.');
+    if (!description) return this.error.set('Description is required.');
+    if (!content) return this.error.set('Content is required.');
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      const postRef = doc(this.db, 'posts', postId);
+      const snap = await getDoc(postRef);
+      if (!snap.exists()) throw new Error('Post not found');
+
+      const prevData: any = snap.data();
+      const prevCategoryIds = Array.isArray(prevData?.category_ids) ? prevData.category_ids.map(String) : [];
+      const nextCategoryIds = Array.from(new Set(this.editSelectedCategoryIds().map(String))).filter(Boolean);
+      const { toAdd, toRemove } = this.setDelta(prevCategoryIds, nextCategoryIds);
+
+      // optional image replacement
+      let main_img = String(prevData?.main_img ?? '');
+      let main_img_path: string | undefined = prevData?.main_img_path ? String(prevData.main_img_path) : undefined;
+
+      const newFile = this.editMainImgFile();
+      if (newFile) {
+        const safeName = (newFile.name || 'image').replace(/[^\w.\-]+/g, '_');
+        const newPath = `posts/${Date.now()}_${crypto.randomUUID()}_${safeName}`;
+        const storageRef = ref(this.storage, newPath);
+        await uploadBytes(storageRef, newFile, { contentType: newFile.type || undefined });
+        const newUrl = await getDownloadURL(storageRef);
+
+        const oldPath = main_img_path;
+        main_img = newUrl;
+        main_img_path = newPath;
+
+        // best-effort delete old storage object after new one is safely uploaded
+        if (oldPath) {
+          try {
+            await deleteObject(ref(this.storage, oldPath));
+          } catch {
+            // ignore; post doc will still point to the new image
+          }
+        }
+      }
+
+      const payload = {
+        title,
+        description,
+        content,
+        created_at: this.localToIso(this.editCreatedAtLocal()),
+        category_ids: nextCategoryIds,
+        tags: this.editSelectedTags(),
+        main_img,
+        ...(main_img_path ? { main_img_path } : { main_img_path: '' }),
+      };
+
+      await updateDoc(postRef, payload);
+
+      // best-effort: update category postCount deltas
+      try {
+        if (toAdd.length || toRemove.length) {
+          const batch = writeBatch(this.db);
+          for (const cid of toAdd) {
+            const cRef = doc(this.db, 'categories', cid);
+            batch.set(cRef, { postCount: increment(1) }, { merge: true });
+            batch.update(cRef, {});
+          }
+          for (const cid of toRemove) {
+            const cRef = doc(this.db, 'categories', cid);
+            batch.set(cRef, { postCount: increment(-1) }, { merge: true });
+            batch.update(cRef, {});
+          }
+          await batch.commit();
+          this.loading.set(false);
+          void this.fetchCategories();
+        }
+      } catch (e: any) {
+        this.error.set(e?.message ?? 'Post updated, but failed to update category postCount');
+      }
+
+      await this.fetchPosts();
+      this.cancelEdit();
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to update post');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  protected onTagsChange(s: string) {
+    this.editSelectedTags.set(s.split(',').map((s: string) => s.trim()).filter(Boolean))
   }
 }
