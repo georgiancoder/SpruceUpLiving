@@ -20,8 +20,8 @@
 
           <div class="p-6 pb-8 flex flex-col h-full">
             <p class="text-sm text-slate-600 uppercase tracking-wide font-medium mb-2">
-              @if (post.tag) {
-                <span>{{ post.tag }}</span>
+              @if (post.categories) {
+                <span>{{ post.categories }}</span>
               }
               @if (post.dateLabel) {
                 <span> • {{ post.dateLabel }}</span>

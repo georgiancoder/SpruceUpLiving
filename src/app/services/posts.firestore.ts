@@ -19,6 +19,7 @@ type PostDoc = {
   created_at?: unknown;
   tags?: unknown;
   slug?: unknown;
+  category_ids?: unknown;
 };
 
 export async function fetchPostsOrderedByCreatedAtDesc(db: Firestore): Promise<AdminPost[]> {
@@ -69,7 +70,9 @@ export async function fetchLatestPostsOrderedByCreatedAtDesc(
       const rawTags = Array.isArray(data?.tags) ? (data.tags as unknown[]) : [];
       const tag = rawTags.length ? String(rawTags[0] ?? '').trim() : undefined;
 
-      return { title, excerpt, href, dateLabel, tag } as LatestPost;
+      const categoryIds = Array.isArray(data?.category_ids) ? data.category_ids.map(String) : [];
+
+      return { title, excerpt, href, dateLabel, tag, category_ids: categoryIds } as LatestPost;
     })
     .filter((x): x is LatestPost => !!x);
 

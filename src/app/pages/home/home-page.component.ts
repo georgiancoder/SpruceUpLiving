@@ -14,6 +14,11 @@ import {collection, getDocs, getFirestore, orderBy, query} from 'firebase/firest
 import type { CategoryDoc, CategoryItem } from '../../types/category.types';
 import { fetchLatestPostsOrderedByCreatedAtDesc } from '../../services/posts.firestore';
 
+type PostWithCategories = LatestPost & {
+  category_ids?: string[];
+  categories?: CategoryItem[];
+};
+
 @Component({
   selector: 'app-home-page',
   standalone: true,
@@ -57,14 +62,15 @@ export class HomePageComponent implements OnInit {
     }
   ];
 
-  // fetched from Firestore
-  readonly latestPosts = signal<LatestPost[]>([]);
+  // fetched from Firestore (enriched with categories)
+  readonly latestPosts = signal<PostWithCategories[]>([]);
 
   private readonly db = getFirestore();
 
   readonly categoryLoading = signal(false);
   readonly error = signal<string | null>(null);
 
+  private readonly _categoriesById = signal<Record<string, CategoryItem>>({});
   private readonly _categoryItems = signal<CategoryItem[]>([]);
 
   public get categoryItems(): CategoryItem[] {
@@ -80,7 +86,16 @@ export class HomePageComponent implements OnInit {
 
   private async fetchLatestPosts() {
     try {
-      this.latestPosts.set(await fetchLatestPostsOrderedByCreatedAtDesc(this.db, 4));
+      const posts = await fetchLatestPostsOrderedByCreatedAtDesc(this.db, 4);
+
+      const byId = this._categoriesById();
+      const enriched = posts.map((p: any) => {
+        const ids = Array.isArray(p?.category_ids) ? p.category_ids.map(String) : [];
+        const categories = ids.map((id: string) => byId[id]).filter(Boolean).map((c: { title: any; }) => c.title);
+        return { ...(p as LatestPost), category_ids: ids, categories } as PostWithCategories;
+      });
+
+      this.latestPosts.set(enriched);
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to load posts.');
     }
@@ -96,6 +111,7 @@ export class HomePageComponent implements OnInit {
       const q = query(colRef, orderBy('name', 'asc'));
       const snap = await getDocs(q);
 
+      const byId: Record<string, CategoryItem> = {};
       const mapped = snap.docs
         .map((d) => {
           const data = d.data() as CategoryDoc;
@@ -104,16 +120,20 @@ export class HomePageComponent implements OnInit {
 
           if (!name || !slug) return null;
 
-          return {
+          const item = {
             title: name,
             href: `/categories/${slug}`,
             description: typeof data.description === 'string' ? data.description : undefined,
             count: typeof data.postCount === 'number' ? data.postCount : undefined,
             countLabel: 'articles',
           } as CategoryItem;
+
+          byId[d.id] = item;
+          return item;
         })
         .filter((x): x is CategoryItem => !!x) as CategoryItem[];
 
+      this._categoriesById.set(byId);
       this._categoryItems.set(mapped);
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to load categories.');

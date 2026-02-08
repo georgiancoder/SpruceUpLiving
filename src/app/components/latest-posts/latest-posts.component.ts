@@ -6,6 +6,7 @@ export type LatestPost = {
   href: string;
   dateLabel?: string;
   tag?: string;
+  categories?: string[];
 };
 
 @Component({
@@ -25,6 +26,7 @@ export class LatestPostsComponent {
   @Input() maxItems = 4;
 
   get visiblePosts(): LatestPost[] {
+    console.log(this.posts);
     const n = Math.max(0, this.maxItems ?? 0);
     return (this.posts ?? []).slice(0, n);
   }
