@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 import {DatePipe} from '@angular/common';
 
 export type LatestPost = {
+  main_img: string;
   title: string;
   excerpt?: string;
   href: string;

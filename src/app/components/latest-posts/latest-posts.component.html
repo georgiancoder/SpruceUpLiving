@@ -16,7 +16,17 @@
         <article
           class="group bg-white/80 rounded-3xl border border-amber-200/60 shadow-lg hover:shadow-2xl hover:shadow-amber-200/50 hover:-translate-y-2 transition-all duration-500 overflow-hidden backdrop-blur-sm hover:bg-white"
         >
-          <div class="h-40 bg-gradient-to-br from-amber-200/70 to-amber-400/50 shadow-inner"></div>
+          @if (post.main_img) {
+            <img
+              class="h-40 w-full object-cover"
+              [src]="post.main_img"
+              [alt]="post.title"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+            />
+          } @else {
+            <div class="h-40 bg-gradient-to-br from-amber-200/70 to-amber-400/50 shadow-inner"></div>
+          }
 
           <div class="p-6 pb-8 flex flex-col h-full">
             <p class="text-sm text-slate-600 uppercase tracking-wide font-medium mb-2">

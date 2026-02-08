@@ -14,6 +14,7 @@ export type AdminPost = {
 };
 
 type PostDoc = {
+  main_img?: unknown;
   title?: unknown;
   description?: unknown;
   created_at?: unknown;
@@ -61,6 +62,8 @@ export async function fetchLatestPostsOrderedByCreatedAtDesc(
       const title = String(data?.title ?? '').trim();
       if (!title) return null;
 
+      const main_img = String(data?.main_img ?? '').trim();
+
       const slug = String(data?.slug ?? '').trim();
       const href = slug ? `/posts/${slug}` : `/posts/${d.id}`;
 
@@ -72,7 +75,7 @@ export async function fetchLatestPostsOrderedByCreatedAtDesc(
 
       const categoryIds = Array.isArray(data?.category_ids) ? data.category_ids.map(String) : [];
 
-      return { title, excerpt, href, dateLabel, tag, category_ids: categoryIds } as LatestPost;
+      return { main_img, title, excerpt, href, dateLabel, tag, category_ids: categoryIds } as LatestPost;
     })
     .filter((x): x is LatestPost => !!x);
 
