@@ -21,10 +21,13 @@
           <div class="p-6 pb-8 flex flex-col h-full">
             <p class="text-sm text-slate-600 uppercase tracking-wide font-medium mb-2">
               @if (post.categories) {
-                <span>{{ post.categories }}</span>
+                <span>{{ post.categories.join(', ') }}</span>
               }
               @if (post.dateLabel) {
-                <span> • {{ post.dateLabel }}</span>
+                <span>
+                  •
+                  {{ post.dateLabel | date:'MMM yyyy' }}
+                </span>
               }
             </p>
 

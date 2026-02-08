@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
+import {DatePipe} from '@angular/common';
 
 export type LatestPost = {
   title: string;
@@ -14,6 +15,9 @@ export type LatestPost = {
   standalone: true,
   templateUrl: './latest-posts.component.html',
   styleUrl: './latest-posts.component.css',
+  imports: [
+    DatePipe
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LatestPostsComponent {
@@ -25,8 +29,8 @@ export class LatestPostsComponent {
 
   @Input() maxItems = 4;
 
+
   get visiblePosts(): LatestPost[] {
-    console.log(this.posts);
     const n = Math.max(0, this.maxItems ?? 0);
     return (this.posts ?? []).slice(0, n);
   }

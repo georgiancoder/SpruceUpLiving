@@ -441,13 +441,12 @@ export class AdminPostsPageComponent implements OnInit {
             batch.update(cRef, {});
           }
           await batch.commit();
-          this.loading.set(false);
           void this.fetchCategories();
         }
       } catch (e: any) {
         this.error.set(e?.message ?? 'Post updated, but failed to update category postCount');
       }
-
+      this.loading.set(false);
       await this.fetchPosts();
       this.cancelEdit();
     } catch (e: any) {
