@@ -7,6 +7,7 @@ import {
   computed,
   effect
 } from '@angular/core';
+import {NgClass, NgFor, NgIf} from '@angular/common';
 
 export type HeroSlide = {
   title: string;
@@ -19,6 +20,7 @@ export type HeroSlide = {
 @Component({
   selector: 'app-hero-slider',
   standalone: true,
+  imports: [NgIf, NgFor, NgClass],
   templateUrl: './hero-slider.component.html',
   styleUrl: './hero-slider.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -26,6 +28,7 @@ export type HeroSlide = {
 export class HeroSliderComponent implements OnDestroy {
   @Input({ required: true }) slides: HeroSlide[] = [];
   @Input() autoplayMs = 6000;
+  @Input() fadeMs = 220;
 
   private readonly indexSig = signal(0);
   protected readonly index = this.indexSig.asReadonly();
@@ -40,6 +43,8 @@ export class HeroSliderComponent implements OnDestroy {
 
   private paused = signal(false);
   private timer: number | null = null;
+
+  protected readonly isFading = signal(false);
 
   constructor() {
     effect(() => {
@@ -67,7 +72,11 @@ export class HeroSliderComponent implements OnDestroy {
     const n = this.slides?.length ?? 0;
     if (!n) return;
     const next = ((i % n) + n) % n;
-    this.indexSig.set(next);
+
+    // Avoid re-animating when clicking the active dot
+    if (next === this.indexSig()) return;
+
+    this.fadeToIndex(next);
   }
 
   protected prev() {
@@ -76,6 +85,27 @@ export class HeroSliderComponent implements OnDestroy {
 
   protected next() {
     this.goTo(this.indexSig() + 1);
+  }
+
+  private fadeToIndex(next: number) {
+    // If fade disabled, switch immediately
+    if (this.fadeMs <= 0) {
+      this.indexSig.set(next);
+      return;
+    }
+
+    // Simple re-entrancy guard
+    if (this.isFading()) return;
+
+    this.isFading.set(true);
+
+    window.setTimeout(() => {
+      this.indexSig.set(next);
+
+      window.setTimeout(() => {
+        this.isFading.set(false);
+      }, this.fadeMs);
+    }, this.fadeMs);
   }
 
   private stop() {
