@@ -27,6 +27,7 @@ export type HeroSlide = {
 })
 export class HeroSliderComponent implements OnDestroy {
   @Input({ required: true }) slides: HeroSlide[] = [];
+  @Input() popularPosts: HeroSlide[] | null = null;
   @Input() autoplayMs = 6000;
   @Input() fadeMs = 220;
 
@@ -46,6 +47,18 @@ export class HeroSliderComponent implements OnDestroy {
 
   protected readonly isFading = signal(false);
 
+  protected readonly progress = signal(0); // 0..1
+  private rafId: number | null = null;
+
+  protected readonly activeSidebarIndex = computed(() => {
+    const items = this.popularPostsResolved();
+    if (!items.length) return -1;
+
+    // Find the sidebar row that maps to the active slide index
+    const slideIdx = this.indexSig();
+    return items.findIndex((item, i) => this.sidebarSlideIndex(item, i) === slideIdx);
+  });
+
   constructor() {
     effect(() => {
       // reset timer when autoplay/paused/slides changes
@@ -54,14 +67,22 @@ export class HeroSliderComponent implements OnDestroy {
       void this.slides?.length;
 
       this.stop();
+      this.stopProgress();
+
+      // reset progress when slides/paused/autoplay/index changes
+      void this.indexSig();
+      this.progress.set(0);
+
       if (!this.hasSlides() || this.paused() || this.autoplayMs <= 0) return;
 
+      this.startProgress();
       this.timer = window.setInterval(() => this.next(), this.autoplayMs);
     });
   }
 
   ngOnDestroy(): void {
     this.stop();
+    this.stopProgress();
   }
 
   protected setPaused(v: boolean) {
@@ -76,6 +97,7 @@ export class HeroSliderComponent implements OnDestroy {
     // Avoid re-animating when clicking the active dot
     if (next === this.indexSig()) return;
 
+    this.progress.set(0);
     this.fadeToIndex(next);
   }
 
@@ -91,6 +113,7 @@ export class HeroSliderComponent implements OnDestroy {
     // If fade disabled, switch immediately
     if (this.fadeMs <= 0) {
       this.indexSig.set(next);
+      this.progress.set(0);
       return;
     }
 
@@ -101,6 +124,7 @@ export class HeroSliderComponent implements OnDestroy {
 
     window.setTimeout(() => {
       this.indexSig.set(next);
+      this.progress.set(0);
 
       window.setTimeout(() => {
         this.isFading.set(false);
@@ -113,5 +137,59 @@ export class HeroSliderComponent implements OnDestroy {
       clearInterval(this.timer);
       this.timer = null;
     }
+  }
+
+  private startProgress() {
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      // stop conditions (keeps bar from running while paused/disabled)
+      if (!this.hasSlides() || this.paused() || this.autoplayMs <= 0) {
+        this.stopProgress();
+        return;
+      }
+
+      const t = Math.min(1, Math.max(0, (now - start) / this.autoplayMs));
+      this.progress.set(t);
+
+      if (t < 1) this.rafId = requestAnimationFrame(tick);
+    };
+
+    this.rafId = requestAnimationFrame(tick);
+  }
+
+  private stopProgress() {
+    if (this.rafId != null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  }
+
+  protected readonly popularPostsResolved = computed(() => {
+    const p = this.popularPosts;
+    if (p && p.length) return p;
+    return this.slides ?? [];
+  });
+
+  /** Map a sidebar item -> index in `slides` (works even if popularPosts is a different array instance). */
+  protected sidebarSlideIndex(item: HeroSlide, fallbackIndex: number): number {
+    // Fast path when sidebar is literally slides (default)
+    const direct = this.slides?.[fallbackIndex];
+    if (direct === item) return fallbackIndex;
+
+    // Best-effort: match by href, then by title (customize if you have stable IDs)
+    const byHref = item.ctaHref
+      ? (this.slides ?? []).findIndex(s => s.ctaHref && s.ctaHref === item.ctaHref)
+      : -1;
+    if (byHref >= 0) return byHref;
+
+    const byTitle = item.title
+      ? (this.slides ?? []).findIndex(s => s.title === item.title)
+      : -1;
+    return byTitle >= 0 ? byTitle : fallbackIndex;
+  }
+
+  protected sidebarIsActive(item: HeroSlide, fallbackIndex: number): boolean {
+    return this.sidebarSlideIndex(item, fallbackIndex) === this.indexSig();
   }
 }

@@ -10,6 +10,11 @@
   opacity: 0.1;
 }
 
+/* sidebar progress bar sits inside the card */
+:host ::ng-deep article[role='button'] {
+  position: relative;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-fade {
     transition: none;
