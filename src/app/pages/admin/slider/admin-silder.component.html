@@ -83,18 +83,66 @@
       Loading posts...
     </div>
   } @else {
-    @if (posts().length === 0) {
+    <!-- Search -->
+    <div class="mb-3">
+      <label class="block text-sm font-medium text-gray-900" for="postSearch">Search posts</label>
+      <input
+        id="postSearch"
+        type="text"
+        class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
+        placeholder="Search by title or description..."
+        [value]="searchQuery()"
+        (input)="searchQuery.set(($any($event.target)).value)"
+      />
+    </div>
+
+    <!-- Pagination controls -->
+    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div class="text-sm text-gray-600">
+        Showing
+        <span class="font-medium text-gray-900">{{ pagedPosts().length }}</span>
+        of
+        <span class="font-medium text-gray-900">{{ filteredPosts().length }}</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="page() <= 1"
+          class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Prev
+        </button>
+
+        <div class="text-sm text-gray-700">
+          Page <span class="font-medium text-gray-900">{{ page() }}</span> /
+          <span class="font-medium text-gray-900">{{ totalPages() }}</span>
+        </div>
+
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages()"
+          class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+
+    @if (filteredPosts().length === 0) {
       <div class="rounded-lg border border-gray-200 bg-white px-4 py-4 text-sm text-gray-600">
         No posts found.
       </div>
     } @else {
       <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <ul class="divide-y divide-gray-200">
-          @for (p of posts(); track p.id) {
+          @for (p of pagedPosts(); track p.id) {
             <li class="flex items-start gap-3 p-4 sm:items-center">
               <input
                 type="checkbox"
-                class="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-600 sm:mt-0"
+                class="mt-1 h-4 w-4 rounded border border-gray-300 text-emerald-600 focus:ring-emerald-600 sm:mt-0"
                 [checked]="isSelected(p.id)"
                 (change)="toggleSelected(p.id, ($any($event.target)).checked)"
               />

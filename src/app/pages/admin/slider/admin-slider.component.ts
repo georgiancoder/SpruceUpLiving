@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { collection, doc, getDoc, getDocs, getFirestore, orderBy, query, setDoc } from 'firebase/firestore';
@@ -26,6 +26,57 @@ export class AdminSliderPageComponent implements OnInit {
 
   readonly posts = signal<SliderPostRow[]>([]);
   readonly selectedIds = signal<Set<string>>(new Set());
+
+  readonly searchQuery = signal<string>('');
+
+  // pagination
+  readonly pageSize = 10;
+  readonly page = signal(1);
+
+  readonly filteredPosts = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    if (!q) return this.posts();
+
+    return this.posts().filter((p) => {
+      const title = (p.title ?? '').toLowerCase();
+      const desc = (p.description ?? '').toLowerCase();
+      return title.includes(q) || desc.includes(q);
+    });
+  });
+
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredPosts().length / this.pageSize)));
+
+  readonly pagedPosts = computed(() => {
+    const total = this.totalPages();
+    const clampedPage = Math.min(Math.max(this.page(), 1), total);
+    const start = (clampedPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    return this.filteredPosts().slice(start, end);
+  });
+
+  // reset page on new search, and clamp/reset when data changes
+  private readonly _paginationEffects = [
+    effect(() => {
+      // when query changes, go back to page 1
+      void this.searchQuery();
+      this.page.set(1);
+    }),
+    effect(() => {
+      // clamp page when list size changes
+      const total = this.totalPages();
+      const p = this.page();
+      if (p > total) this.page.set(total);
+      if (p < 1) this.page.set(1);
+    }),
+  ];
+
+  prevPage(): void {
+    this.page.set(Math.max(1, this.page() - 1));
+  }
+
+  nextPage(): void {
+    this.page.set(Math.min(this.totalPages(), this.page() + 1));
+  }
 
   // already-added slider posts (stored as ids in Firestore)
   readonly sliderPostIds = signal<string[]>([]);
@@ -85,6 +136,7 @@ export class AdminSliderPageComponent implements OnInit {
       });
 
       this.posts.set(rows);
+      this.page.set(1); // after refetch, always start from first page
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to fetch posts.');
     } finally {
