@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { collection, doc, getDocs, getFirestore, orderBy, query, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, getFirestore, orderBy, query, setDoc } from 'firebase/firestore';
 
 type SliderPostRow = {
   id: string;
@@ -27,11 +27,39 @@ export class AdminSliderPageComponent implements OnInit {
   readonly posts = signal<SliderPostRow[]>([]);
   readonly selectedIds = signal<Set<string>>(new Set());
 
+  // already-added slider posts (stored as ids in Firestore)
+  readonly sliderPostIds = signal<string[]>([]);
+
   readonly selectedCount = computed(() => this.selectedIds().size);
   readonly canSubmit = computed(() => !this.loading() && this.selectedCount() > 0);
 
+  // show current slider posts above (in the same order as saved ids)
+  readonly sliderPosts = computed(() => {
+    const byId = new Map(this.posts().map((p) => [p.id, p] as const));
+    return this.sliderPostIds()
+      .map((id) => byId.get(id))
+      .filter((p): p is SliderPostRow => !!p);
+  });
+
   ngOnInit(): void {
-    void this.fetchPosts();
+    void this.init();
+  }
+
+  private async init(): Promise<void> {
+    await this.fetchSliderConfig();
+    await this.fetchPosts();
+  }
+
+  private async fetchSliderConfig(): Promise<void> {
+    try {
+      const snap = await getDoc(doc(this.db, 'settings', 'mainSlider'));
+      const data = snap.exists() ? (snap.data() as any) : null;
+      const ids = Array.isArray(data?.postIds) ? (data.postIds as unknown[]).map(String) : [];
+      this.sliderPostIds.set(ids);
+    } catch {
+      // keep silent; page still works without config doc
+      this.sliderPostIds.set([]);
+    }
   }
 
   async fetchPosts(): Promise<void> {
@@ -84,9 +112,9 @@ export class AdminSliderPageComponent implements OnInit {
 
     try {
       const ids = Array.from(this.selectedIds());
-      // stores slider configuration in a single doc for easy consumption by the hero slider
       await setDoc(doc(this.db, 'settings', 'mainSlider'), { postIds: ids }, { merge: true });
 
+      this.sliderPostIds.set(ids); // update UI immediately
       this.status.set(`Added ${ids.length} post(s) to main slider.`);
       this.selectedIds.set(new Set());
     } catch (e: any) {

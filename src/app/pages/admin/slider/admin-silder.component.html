@@ -36,6 +36,48 @@
     </div>
   }
 
+  <!-- Slider-added posts -->
+  <div class="mb-6">
+    <div class="mb-2 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-900">Slider posts</h2>
+      <div class="text-xs text-gray-500">{{ sliderPosts().length }}</div>
+    </div>
+
+    @if (sliderPosts().length === 0) {
+      <div class="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
+        No posts added to slider yet.
+      </div>
+    } @else {
+      <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <ul class="divide-y divide-gray-200">
+          @for (p of sliderPosts(); track p.id) {
+            <li class="flex items-start gap-3 p-4 sm:items-center">
+              @if (p.main_img) {
+                <a class="hidden sm:block" [href]="p.main_img!" target="_blank" rel="noopener">
+                  <img
+                    class="h-10 w-10 rounded-lg border border-gray-200 object-cover"
+                    [src]="p.main_img!"
+                    [alt]="p.title"
+                    loading="lazy"
+                  />
+                </a>
+              } @else {
+                <div class="hidden h-10 w-10 rounded-lg border border-gray-200 bg-gray-50 sm:block"></div>
+              }
+
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-sm font-medium text-gray-900">{{ p.title || '(Untitled)' }}</div>
+                <div class="mt-1 line-clamp-1 text-xs text-gray-600">{{ p.description }}</div>
+              </div>
+
+              <div class="shrink-0 text-xs text-gray-500">{{ p.id }}</div>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+
   @if (loading()) {
     <div class="rounded-lg border border-gray-200 bg-white px-4 py-4 text-sm text-gray-600">
       Loading posts...
