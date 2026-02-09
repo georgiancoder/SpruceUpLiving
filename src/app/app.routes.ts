@@ -12,6 +12,7 @@ import { adminAuthGuard } from './guards/admin-auth.guard';
 import { redirectAuthedFromAdminLoginGuard } from './guards/redirect-authed-from-admin-login.guard';
 import {AdminCategoriesPageComponent} from './pages/admin/categories/admin-categories-page.component';
 import {AdminMenuPageComponent} from './pages/admin/menu/admin-menu-page.component';
+import {AdminSliderPageComponent} from './pages/admin/slider/admin-slider.component';
 
 export const routes: Routes = [
   // Root shows login
@@ -34,7 +35,8 @@ export const routes: Routes = [
       { path: 'posts', canActivate: [adminAuthGuard], component: AdminPostsPageComponent },
       { path: 'dashboard', canActivate: [adminAuthGuard], component: AdminDashboardComponent },
       { path: 'categories', canActivate: [adminAuthGuard], component: AdminCategoriesPageComponent },
-      { path: 'menu', canActivate: [adminAuthGuard], component: AdminMenuPageComponent }
+      { path: 'menu', canActivate: [adminAuthGuard], component: AdminMenuPageComponent },
+      { path: "slider", canActivate: [adminAuthGuard], component: AdminSliderPageComponent },
     ],
   },
 

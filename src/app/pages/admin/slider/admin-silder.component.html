@@ -1,0 +1,185 @@
+<div class="mx-auto w-full max-w-5xl px-4 py-6">
+  <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-xl font-semibold text-gray-900">Main Slider</h1>
+      <p class="text-sm text-gray-600">Select posts and add them to the main hero slider.</p>
+    </div>
+
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+      <a
+        routerLink="/admin/dashboard"
+        class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+      >
+        Back to dashboard
+      </a>
+
+      <button
+        type="button"
+        (click)="addPostsToMainSlider()"
+        [disabled]="!canSubmit()"
+        class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Add posts to main slider <span class="ml-2">({{ selectedCount() }})</span>
+      </button>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {{ error() }}
+    </div>
+  }
+
+  @if (status()) {
+    <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+      {{ status() }}
+    </div>
+  }
+
+  <!-- Slider-added posts -->
+  <div class="mb-6">
+    <div class="mb-2 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-900">Slider posts</h2>
+      <div class="text-xs text-gray-500">{{ sliderPosts().length }}</div>
+    </div>
+
+    @if (sliderPosts().length === 0) {
+      <div class="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
+        No posts added to slider yet.
+      </div>
+    } @else {
+      <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <ul class="divide-y divide-gray-200">
+          @for (p of sliderPosts(); track p.id) {
+            <li class="flex items-start gap-3 p-4 sm:items-center">
+              @if (p.main_img) {
+                <a class="hidden sm:block" [href]="p.main_img!" target="_blank" rel="noopener">
+                  <img
+                    class="h-10 w-10 rounded-lg border border-gray-200 object-cover"
+                    [src]="p.main_img!"
+                    [alt]="p.title"
+                    loading="lazy"
+                  />
+                </a>
+              } @else {
+                <div class="hidden h-10 w-10 rounded-lg border border-gray-200 bg-gray-50 sm:block"></div>
+              }
+
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-sm font-medium text-gray-900">{{ p.title || '(Untitled)' }}</div>
+                <div class="mt-1 line-clamp-1 text-xs text-gray-600">{{ p.description }}</div>
+              </div>
+
+              <div class="shrink-0 text-xs text-gray-500">{{ p.id }}</div>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="rounded-lg border border-gray-200 bg-white px-4 py-4 text-sm text-gray-600">
+      Loading posts...
+    </div>
+  } @else {
+    <!-- Search -->
+    <div class="mb-3">
+      <label class="block text-sm font-medium text-gray-900" for="postSearch">Search posts</label>
+      <input
+        id="postSearch"
+        type="text"
+        class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
+        placeholder="Search by title or description..."
+        [value]="searchQuery()"
+        (input)="searchQuery.set(($any($event.target)).value)"
+      />
+    </div>
+
+    <!-- Pagination controls -->
+    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div class="text-sm text-gray-600">
+        Showing
+        <span class="font-medium text-gray-900">{{ pagedPosts().length }}</span>
+        of
+        <span class="font-medium text-gray-900">{{ filteredPosts().length }}</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="prevPage()"
+          [disabled]="page() <= 1"
+          class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Prev
+        </button>
+
+        <div class="text-sm text-gray-700">
+          Page <span class="font-medium text-gray-900">{{ page() }}</span> /
+          <span class="font-medium text-gray-900">{{ totalPages() }}</span>
+        </div>
+
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages()"
+          class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+
+    @if (filteredPosts().length === 0) {
+      <div class="rounded-lg border border-gray-200 bg-white px-4 py-4 text-sm text-gray-600">
+        No posts found.
+      </div>
+    } @else {
+      <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <ul class="divide-y divide-gray-200">
+          @for (p of pagedPosts(); track p.id) {
+            <li class="flex items-start gap-3 p-4 sm:items-center">
+              <input
+                type="checkbox"
+                class="mt-1 h-4 w-4 rounded border border-gray-300 text-emerald-600 focus:ring-emerald-600 sm:mt-0"
+                [checked]="isSelected(p.id)"
+                (change)="toggleSelected(p.id, ($any($event.target)).checked)"
+              />
+
+              @if (p.main_img) {
+                <a class="hidden sm:block" [href]="p.main_img!" target="_blank" rel="noopener">
+                  <img
+                    class="h-12 w-12 rounded-lg border border-gray-200 object-cover"
+                    [src]="p.main_img!"
+                    [alt]="p.title"
+                    loading="lazy"
+                  />
+                </a>
+              } @else {
+                <div class="hidden h-12 w-12 rounded-lg border border-gray-200 bg-gray-50 sm:block"></div>
+              }
+
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <div class="truncate font-medium text-gray-900">{{ p.title || '(Untitled)' }}</div>
+                  @if (p.created_at) {
+                    <div class="shrink-0 text-xs text-gray-500">• {{ p.created_at }}</div>
+                  }
+                </div>
+                <div class="mt-1 line-clamp-2 text-sm text-gray-600">
+                  {{ p.description }}
+                </div>
+              </div>
+
+              <div class="shrink-0 text-xs text-gray-500">
+                {{ p.id }}
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  }
+</div>
+

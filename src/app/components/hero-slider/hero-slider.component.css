@@ -1,0 +1,22 @@
+/* ...existing code... */
+
+.hero-fade {
+  opacity: 1;
+  transition: opacity 220ms ease-in-out;
+  will-change: opacity;
+}
+
+.hero-fade--out {
+  opacity: 0.1;
+}
+
+/* sidebar progress bar sits inside the card */
+:host ::ng-deep article[role='button'] {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-fade {
+    transition: none;
+  }
+}
