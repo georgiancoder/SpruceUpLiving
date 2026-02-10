@@ -15,6 +15,7 @@ export type HeroSlide = {
   ctaLabel?: string;
   ctaHref?: string;
   imageUrl?: string;
+  readMinutes?: number;
   categories?: string[];
   tags?: string[];
 };

@@ -60,6 +60,38 @@ export class HomePageComponent implements OnInit {
     ]);
   }
 
+  private estimateReadingMinutesFromText(input: unknown, wpm = 200): number | null {
+    const text = typeof input === 'string' ? input : '';
+    const normalized = text
+      .replace(/<[^>]+>/g, ' ') // strip HTML
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!normalized) return null;
+
+    const words = normalized.split(' ').filter(Boolean).length;
+    const minutes = Math.max(1, Math.ceil(words / wpm));
+    return Number.isFinite(minutes) ? minutes : null;
+  }
+
+  private estimateReadingMinutesFromPost(post: any): number | null {
+    // Try common fields; adjust to your post schema if needed
+    const candidates = [
+      post?.content,
+      post?.body,
+      post?.html,
+      post?.markdown,
+      post?.excerpt,
+      post?.description,
+    ];
+
+    const combined = candidates
+      .filter((x: any) => typeof x === 'string' && x.trim().length)
+      .join('\n\n');
+
+    return this.estimateReadingMinutesFromText(combined);
+  }
+
   private async fetchMainSlider() {
     try {
       const ref = doc(this.db, 'settings', 'mainSlider');
@@ -112,6 +144,8 @@ export class HomePageComponent implements OnInit {
 
           if (!title || !imageUrl) return null;
 
+          const readMinutes = this.estimateReadingMinutesFromPost(post);
+
           return {
             title,
             subtitle,
@@ -120,12 +154,13 @@ export class HomePageComponent implements OnInit {
             imageUrl,
             tags,
             categories,
-            // Extra data is fine to carry if your slider ignores it
-            // (kept minimal to avoid typing issues)
             postId: id,
+            // extra display data for UI (optional)
+            readMinutes,
           } as any as HeroSlide;
         })
         .filter((x: HeroSlide | null): x is HeroSlide => !!x);
+
       this.heroSlides.set(slides);
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to load main slider.');

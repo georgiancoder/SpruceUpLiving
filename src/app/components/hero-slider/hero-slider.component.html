@@ -33,7 +33,7 @@
             <!-- ...existing meta row can be slide-driven later if desired... -->
             <div class="flex items-center gap-4 text-sm text-amber-700 mb-4 opacity-90">
               <span *ngFor="let category of s.categories">{{category}}</span>
-              <span>• 8 min read</span>
+              <span>• {{s.readMinutes}} min read</span>
             </div>
 
             <p *ngIf="s.subtitle" class="text-base lg:text-lg text-slate-700 leading-relaxed max-w-prose mb-8 lg:mb-10">
