@@ -16,6 +16,7 @@ import {
   updateCategory,
   type CategoryDoc,
 } from '../../../services/categories.firestore';
+import {CategoryItem} from '../../../types/category.types';
 
 type Category = {
   id: string;
@@ -46,7 +47,7 @@ export class AdminCategoriesPageComponent implements OnInit {
   private readonly db = getFirestore();
   // private readonly categoriesCol = collection(this.db, 'categories');
 
-  readonly categories = signal<Category[]>([]);
+  readonly categories = signal<CategoryItem[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -128,9 +129,9 @@ export class AdminCategoriesPageComponent implements OnInit {
     }
   }
 
-  startEdit(c: Category) {
+  startEdit(c: CategoryItem) {
     this.editingId.set(c.id);
-    this.editName = c.name ?? '';
+    this.editName = c.title ?? '';
     this.editDescription = c.description ?? '';
   }
 

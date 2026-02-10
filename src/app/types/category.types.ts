@@ -4,7 +4,7 @@ export type CategoryItem = {
   href: string;
   description?: string;
   imageUrl?: string;
-
+  slug?: string;
   count?: number;
   countLabel?: string; // e.g. "articles"
 };

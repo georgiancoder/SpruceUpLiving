@@ -1,4 +1,5 @@
 import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, type Firestore, updateDoc } from 'firebase/firestore';
+import {CategoryItem} from '../types/category.types';
 
 export type Category = {
   id: string;
@@ -10,7 +11,7 @@ export type Category = {
 
 export type CategoryDoc = Omit<Category, 'id'>;
 
-export async function fetchCategoriesOrderedByName(db: Firestore): Promise<Category[]> {
+export async function fetchCategoriesOrderedByName(db: Firestore): Promise<CategoryItem[]> {
   const col = collection(db, 'categories');
   const q = query(col, orderBy('name', 'asc'));
   const snap = await getDocs(q);
@@ -19,7 +20,8 @@ export async function fetchCategoriesOrderedByName(db: Firestore): Promise<Categ
     const data = d.data() as Partial<CategoryDoc>;
     return {
       id: d.id,
-      name: String(data.name ?? ''),
+      title: String(data.name ?? ''),
+      href: '/' + String(data.slug ?? ''),
       slug: String(data.slug ?? ''),
       description: typeof data.description === 'string' ? data.description : undefined,
       postCount: typeof data.postCount === 'number' ? data.postCount : undefined,

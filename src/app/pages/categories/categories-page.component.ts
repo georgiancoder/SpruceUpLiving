@@ -78,17 +78,21 @@ export class CategoriesPageComponent implements OnInit {
     });
   });
 
+  setCategoryNamesById(cats: CategoryItem[]) {
+    const selectedCatNames = cats.filter(c => this.selectedCategoryIds().includes(c.id)).map(c => c.title);
+    this.selectedCategoryNames.set(selectedCatNames.length ? selectedCatNames : cats.map(c => c.title));
+  }
+
   async ngOnInit() {
     const cats = await fetchCategoriesOrderedByName(this.db);
-    this.totalPosts.set(cats.reduce((sum, c) => sum + (typeof c.postCount === 'number' ? c.postCount : 0), 0));
-    const selectedCatNames = cats.filter(c => this.selectedCategoryIds().includes(c.id)).map(c => c.name);
-    this.selectedCategoryNames.set(selectedCatNames.length ? selectedCatNames : cats.map(c => c.name));
+    this.totalPosts.set(cats.reduce((sum, c) => sum + (typeof c.count === 'number' ? c.count : 0), 0));
+    this.setCategoryNamesById(cats);
     this.categories.set(
       cats.map((c) => ({
         id: c.id,
         count: typeof (c as any).postCount === 'number' ? (c as any).postCount : undefined,
-        title: c.name,
-        href: c.slug
+        title: c.title,
+        href: c.href
       }))
     );
   }
@@ -99,6 +103,7 @@ export class CategoriesPageComponent implements OnInit {
 
   onSelectedIdsChange(ids: string[]) {
     this.selectedCategoryIds.set(ids);
+    // this.selectedCategoryNames.set(selectedCatNames.length ? selectedCatNames : cats.map(c => c.name));
   }
 
   onClearFilters() {

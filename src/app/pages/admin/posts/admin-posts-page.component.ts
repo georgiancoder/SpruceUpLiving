@@ -15,6 +15,7 @@ import {
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
 import { fetchPostsOrderedByCreatedAtDesc, type AdminPost } from '../../../services/posts.firestore';
+import {CategoryItem} from '../../../types/category.types';
 
 @Component({
   selector: 'app-admin-posts-page',
@@ -46,7 +47,7 @@ export class AdminPostsPageComponent implements OnInit {
   readonly selectedTags = signal<string[]>([]);
 
   // categories (fetched)
-  readonly categories = signal<Category[]>([]);
+  readonly categories = signal<CategoryItem[]>([]);
   readonly categoriesLoading = signal<boolean>(false);
 
   // category select helpers
