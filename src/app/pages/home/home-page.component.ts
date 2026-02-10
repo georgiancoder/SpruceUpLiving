@@ -94,10 +94,10 @@ export class HomePageComponent implements OnInit {
           const post = postsById.get(id);
           if (!post) return null;
           const o = overrides[idx] ?? {};
-
           const title = (o?.title ?? post?.title ?? '').toString().trim();
           const subtitle = (o?.subtitle ?? post?.description ?? '').toString().trim();
-
+          const category_ids = Array.isArray(post.category_ids) ? post.category_ids : [post.category_ids];
+          const categories = category_ids.map((id:string) => this._categoryItems().find(c => c.id === id)?.title);
           // try common image fields; allow override
           const imageUrl = (o?.imageUrl ?? post?.main_img ?? '')
             .toString()
@@ -119,6 +119,7 @@ export class HomePageComponent implements OnInit {
             ctaHref,
             imageUrl,
             tags,
+            categories,
             // Extra data is fine to carry if your slider ignores it
             // (kept minimal to avoid typing issues)
             postId: id,
@@ -169,6 +170,7 @@ export class HomePageComponent implements OnInit {
           if (!name || !slug) return null;
 
           const item = {
+            id: d.id,
             title: name,
             href: `/categories/${slug}`,
             description: typeof data.description === 'string' ? data.description : undefined,

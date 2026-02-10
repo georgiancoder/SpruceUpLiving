@@ -2,7 +2,7 @@
   <div class="grid lg:grid-cols-[2.2fr_1.2fr] gap-6 items-start">
     <!-- Main Hero Card -->
     <article
-      class="group bg-gradient-to-br from-amber-100/40 via-amber-50/30 to-white/30 rounded-3xl p-7 lg:p-8 shadow-xl shadow-amber-200/40 group-hover:shadow-2xl group-hover:shadow-amber-300/50 transition-all duration-500 border border-amber-200/60 backdrop-blur-sm relative overflow-hidden"
+      class="group bg-gradient-to-br h-full from-amber-100/40 via-amber-50/30 to-white/30 rounded-3xl p-7 lg:p-8 shadow-xl shadow-amber-200/40 group-hover:shadow-2xl group-hover:shadow-amber-300/50 transition-all duration-500 border border-amber-200/60 backdrop-blur-sm relative overflow-hidden"
       (mouseenter)="setPaused(true)"
       (mouseleave)="setPaused(false)"
       (focusin)="setPaused(true)"
@@ -26,22 +26,18 @@
               <span *ngFor="let tag of s.tags" class="px-3 py-1.5 text-xs font-semibold rounded-full bg-white/70 border border-amber-300/70 text-amber-800 shadow-sm">{{tag}}</span>
             </div>
 
-            <p *ngIf="s.subtitle" class="text-xs uppercase tracking-widest text-amber-700 font-semibold mb-2">
-              {{ s.subtitle }}
-            </p>
-
             <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 leading-tight mb-3 lg:mb-4 group-hover:text-amber-900 transition-colors">
               {{ s.title }}
             </h1>
 
             <!-- ...existing meta row can be slide-driven later if desired... -->
             <div class="flex items-center gap-4 text-sm text-amber-700 mb-4 opacity-90">
-              <span>Home Improvement</span>
+              <span *ngFor="let category of s.categories">{{category}}</span>
               <span>• 8 min read</span>
             </div>
 
-            <p class="text-base lg:text-lg text-slate-700 leading-relaxed max-w-prose mb-8 lg:mb-10">
-              Layer soft lighting, textures, and a few simple decor changes to transform any room without a full renovation.
+            <p *ngIf="s.subtitle" class="text-base lg:text-lg text-slate-700 leading-relaxed max-w-prose mb-8 lg:mb-10">
+              {{ s.subtitle }}
             </p>
           </div>
 
