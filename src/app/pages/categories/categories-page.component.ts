@@ -1,15 +1,96 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { CategoriesHeaderComponent } from '../../components/categories-header/categories-header.component';
+import { CategoryFiltersComponent } from '../../components/category-filters/category-filters.component';
+import { PostsGridComponent, type PostGridItem } from '../../components/posts-grid/posts-grid.component';
+import { CategoriesSidebarComponent, type SidebarCategoryItem } from '../../components/categories-sidebar/categories-sidebar.component';
 
 
 @Component({
   selector: 'app-categories-page',
   standalone: true,
-  imports: [],
+  imports: [
+    CategoriesHeaderComponent,
+    CategoryFiltersComponent,
+    PostsGridComponent,
+    CategoriesSidebarComponent,
+  ],
   templateUrl: './categories-page.component.html',
   styleUrl: './categories-page.component.css',
 })
 export class CategoriesPageComponent implements OnInit {
+  // NOTE: wire these into your real categories fetch when ready
+  readonly query = signal('');
+  readonly selectedCategoryIds = signal<string[]>([]);
+
+  // Temporary local data until Firestore wiring (keeps UI working)
+  readonly posts = signal<PostGridItem[]>([
+    {
+      id: 'p1',
+      title: 'How to Refresh Your Living Room in a Weekend',
+      description: 'Quick wins to make your space feel brand new without a full remodel.',
+      created_at: new Date().toISOString(),
+      main_img: '',
+      category_ids: ['home-improvement'],
+      tags: ['tag1'],
+    },
+    {
+      id: 'p2',
+      title: 'Deep Cleaning Checklist for Busy Weeks',
+      description: 'A simple, repeatable routine you can finish in under 60 minutes.',
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      main_img: '',
+      category_ids: ['cleaning'],
+      tags: ['tag2'],
+    },
+    {
+      id: 'p3',
+      title: 'Small Apartment Organization Ideas',
+      description: 'Storage hacks and layout tips to reduce clutter fast.',
+      created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+      main_img: '',
+      category_ids: ['organization'],
+      tags: ['tag3'],
+    },
+  ]);
+
+  readonly categories = signal<SidebarCategoryItem[]>([
+    { id: 'home-improvement', name: 'Home Improvement', count: 32 },
+    { id: 'cleaning', name: 'Cleaning', count: 24 },
+    { id: 'organization', name: 'Organization', count: 19 },
+    { id: 'decorating', name: 'Decorating', count: 27 },
+    { id: 'gardening', name: 'Gardening', count: 25 },
+  ]);
+
+  readonly filteredPosts = computed(() => {
+    const q = this.query().trim().toLowerCase();
+    const selected = new Set(this.selectedCategoryIds());
+
+    return this.posts().filter(p => {
+      const matchesQuery =
+        !q ||
+        p.title.toLowerCase().includes(q) ||
+        (p.description ?? '').toLowerCase().includes(q);
+
+      const matchesCats =
+        selected.size === 0 || (p.category_ids ?? []).some(id => selected.has(id));
+
+      return matchesQuery && matchesCats;
+    });
+  });
+
   async ngOnInit() {
   }
-}
 
+  onQueryChange(q: string) {
+    this.query.set(q);
+  }
+
+  onSelectedIdsChange(ids: string[]) {
+    this.selectedCategoryIds.set(ids);
+  }
+
+  onClearFilters() {
+    this.query.set('');
+    this.selectedCategoryIds.set([]);
+  }
+}
