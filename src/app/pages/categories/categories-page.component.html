@@ -9,6 +9,7 @@
   <app-category-filters
     class="block"
     [query]="query()"
+    [categories]="categories()"
     [selectedIds]="selectedCategoryIds()"
     (queryChange)="onQueryChange($event)"
     (selectedIdsChange)="onSelectedIdsChange($event)"

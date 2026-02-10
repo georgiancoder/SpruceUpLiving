@@ -1,10 +1,5 @@
 import { Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
-
-export type SidebarCategoryItem = {
-  id: string;
-  name: string;
-  count?: number;
-};
+import {CategoryItem} from '../../types/category.types';
 
 @Component({
   selector: 'app-categories-sidebar',
@@ -12,7 +7,7 @@ export type SidebarCategoryItem = {
   templateUrl: './categories-sidebar.component.html',
 })
 export class CategoriesSidebarComponent {
-  @Input({ required: true }) categories: SidebarCategoryItem[] = [];
+  @Input({ required: true }) categories: CategoryItem[] = [];
 
   @Input() selectedIds: string[] = [];
   @Output() selectedIdsChange = new EventEmitter<string[]>();
@@ -24,7 +19,7 @@ export class CategoriesSidebarComponent {
   readonly filteredCategories = computed(() => {
     const q = this.localQuery().trim().toLowerCase();
     if (!q) return this.categories;
-    return this.categories.filter(c => c.name.toLowerCase().includes(q));
+    return this.categories.filter(c => c.title.toLowerCase().includes(q));
   });
 
   isSelected(id: string) {

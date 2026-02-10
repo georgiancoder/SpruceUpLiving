@@ -2,9 +2,10 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { CategoriesHeaderComponent } from '../../components/categories-header/categories-header.component';
 import { CategoryFiltersComponent } from '../../components/category-filters/category-filters.component';
 import { PostsGridComponent, type PostGridItem } from '../../components/posts-grid/posts-grid.component';
-import { CategoriesSidebarComponent, type SidebarCategoryItem } from '../../components/categories-sidebar/categories-sidebar.component';
+import { CategoriesSidebarComponent } from '../../components/categories-sidebar/categories-sidebar.component';
 import { fetchCategoriesOrderedByName } from '../../services/categories.firestore';
 import {getFirestore} from 'firebase/firestore';
+import {CategoryItem} from '../../types/category.types';
 
 
 @Component({
@@ -58,7 +59,7 @@ export class CategoriesPageComponent implements OnInit {
   ]);
 
   readonly selectedCategoryNames = signal<string[]>([]);
-  readonly categories = signal<SidebarCategoryItem[]>([]);
+  readonly categories = signal<CategoryItem[]>([]);
 
   readonly filteredPosts = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -83,10 +84,11 @@ export class CategoriesPageComponent implements OnInit {
     const selectedCatNames = cats.filter(c => this.selectedCategoryIds().includes(c.id)).map(c => c.name);
     this.selectedCategoryNames.set(selectedCatNames.length ? selectedCatNames : cats.map(c => c.name));
     this.categories.set(
-      cats.map((c: { id: any; name: any; }) => ({
+      cats.map((c) => ({
         id: c.id,
-        name: c.name,
         count: typeof (c as any).postCount === 'number' ? (c as any).postCount : undefined,
+        title: c.name,
+        href: c.slug
       }))
     );
   }
