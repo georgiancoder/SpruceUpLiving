@@ -10,7 +10,7 @@ import {
 import { NewsletterSignupComponent } from '../../components/newsletter-signup/newsletter-signup.component';
 import { AboutSectionComponent } from '../../components/about-section/about-section.component';
 import {ContactSectionComponent} from '../../components/contact-section/contact-section.component';
-import {collection, getDocs, getFirestore, orderBy, query} from 'firebase/firestore';
+import {collection, getDocs, getFirestore, orderBy, query, doc, getDoc, documentId, where} from 'firebase/firestore';
 import type { CategoryDoc, CategoryItem } from '../../types/category.types';
 import { fetchLatestPostsOrderedByCreatedAtDesc } from '../../services/posts.firestore';
 
@@ -35,32 +35,7 @@ type PostWithCategories = LatestPost & {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomePageComponent implements OnInit {
-  protected readonly heroSlides: HeroSlide[] = [
-    {
-      title: 'Refresh your space, effortlessly',
-      subtitle: 'Curated home essentials and simple upgrades that make a big impact.',
-      ctaLabel: 'Shop new arrivals',
-      ctaHref: '/about',
-      imageUrl:
-        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=2000&q=80'
-    },
-    {
-      title: 'Organize smarter',
-      subtitle: 'Storage ideas that keep your home calm and clutter-free.',
-      ctaLabel: 'Explore tips',
-      ctaHref: '/contact',
-      imageUrl:
-        'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=2000&q=80'
-    },
-    {
-      title: 'Make it cozy',
-      subtitle: 'Textures, lighting, and small touches that change everything.',
-      ctaLabel: 'Learn more',
-      ctaHref: '/about',
-      imageUrl:
-        'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=2000&q=80'
-    }
-  ];
+  protected readonly heroSlides = signal<HeroSlide[]>([]);
 
   // fetched from Firestore (enriched with categories)
   readonly latestPosts = signal<PostWithCategories[]>([]);
@@ -79,9 +54,118 @@ export class HomePageComponent implements OnInit {
 
   async ngOnInit() {
     await Promise.all([
+      this.fetchMainSlider(),
       this.fetchCategories(),
       this.fetchLatestPosts(),
     ]);
+  }
+
+  private estimateReadingMinutesFromText(input: unknown, wpm = 200): number | null {
+    const text = typeof input === 'string' ? input : '';
+    const normalized = text
+      .replace(/<[^>]+>/g, ' ') // strip HTML
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!normalized) return null;
+
+    const words = normalized.split(' ').filter(Boolean).length;
+    const minutes = Math.max(1, Math.ceil(words / wpm));
+    return Number.isFinite(minutes) ? minutes : null;
+  }
+
+  private estimateReadingMinutesFromPost(post: any): number | null {
+    // Try common fields; adjust to your post schema if needed
+    const candidates = [
+      post?.content,
+      post?.body,
+      post?.html,
+      post?.markdown,
+      post?.excerpt,
+      post?.description,
+    ];
+
+    const combined = candidates
+      .filter((x: any) => typeof x === 'string' && x.trim().length)
+      .join('\n\n');
+
+    return this.estimateReadingMinutesFromText(combined);
+  }
+
+  private async fetchMainSlider() {
+    try {
+      const ref = doc(this.db, 'settings', 'mainSlider');
+      const snap = await getDoc(ref);
+
+      const data = snap.exists() ? (snap.data() as any) : null;
+
+      const postIds: string[] = Array.isArray(data?.postIds)
+        ? data.postIds.map((x: any) => String(x)).filter(Boolean)
+        : [];
+
+      // Optional per-slide overrides (array aligned to postIds by index)
+      const overrides: any[] = Array.isArray(data?.slides) ? data.slides : [];
+
+      if (!postIds.length) {
+        this.heroSlides.set([]);
+        return;
+      }
+      // Fetch posts by IDs (Firestore "in" supports max 10 per query); chunk to be safe
+      const postsById = new Map<string, any>();
+      const chunkSize = 10;
+
+      for (let i = 0; i < postIds.length; i += chunkSize) {
+        const chunk = postIds.slice(i, i + chunkSize);
+        const q = query(collection(this.db, 'posts'), where(documentId(), 'in', chunk));
+        const s = await getDocs(q);
+        s.forEach((d) => postsById.set(d.id, { id: d.id, ...d.data() }));
+      }
+
+      const slides: HeroSlide[] = postIds
+        .map((id, idx) => {
+          const post = postsById.get(id);
+          if (!post) return null;
+          const o = overrides[idx] ?? {};
+          const title = (o?.title ?? post?.title ?? '').toString().trim();
+          const subtitle = (o?.subtitle ?? post?.description ?? '').toString().trim();
+          const category_ids = Array.isArray(post.category_ids) ? post.category_ids : [post.category_ids];
+          const categories = category_ids.map((id:string) => this._categoryItems().find(c => c.id === id)?.title);
+          // try common image fields; allow override
+          const imageUrl = (o?.imageUrl ?? post?.main_img ?? '')
+            .toString()
+            .trim();
+
+          // Default CTA points to post detail; allow override
+          const slug = (post?.slug ?? '').toString().trim();
+          const defaultHref = slug ? `/posts/${slug}` : `/posts/${id}`;
+          const ctaHref = (o?.ctaHref ?? defaultHref).toString().trim();
+          const ctaLabel = (o?.ctaLabel ?? 'Read more').toString().trim();
+          const tags = Array.isArray(post?.tags) ? post.tags.map((t: any) => String(t).trim()).filter(Boolean) : [];
+
+          if (!title || !imageUrl) return null;
+
+          const readMinutes = this.estimateReadingMinutesFromPost(post);
+
+          return {
+            title,
+            subtitle,
+            ctaLabel,
+            ctaHref,
+            imageUrl,
+            tags,
+            categories,
+            postId: id,
+            // extra display data for UI (optional)
+            readMinutes,
+          } as any as HeroSlide;
+        })
+        .filter((x: HeroSlide | null): x is HeroSlide => !!x);
+
+      this.heroSlides.set(slides);
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to load main slider.');
+      this.heroSlides.set([]);
+    }
   }
 
   private async fetchLatestPosts() {
@@ -121,6 +205,7 @@ export class HomePageComponent implements OnInit {
           if (!name || !slug) return null;
 
           const item = {
+            id: d.id,
             title: name,
             href: `/categories/${slug}`,
             description: typeof data.description === 'string' ? data.description : undefined,

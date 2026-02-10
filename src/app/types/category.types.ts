@@ -1,4 +1,5 @@
 export type CategoryItem = {
+  id: string;
   title: string;
   href: string;
   description?: string;

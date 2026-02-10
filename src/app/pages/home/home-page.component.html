@@ -1,4 +1,6 @@
-<app-hero-slider [slides]="heroSlides" [autoplayMs]="6000" />
+@if (heroSlides().length){
+  <app-hero-slider [slides]="heroSlides()" [autoplayMs]="6000" />
+}
 
 <section class="home__section">
   <app-latest-posts
