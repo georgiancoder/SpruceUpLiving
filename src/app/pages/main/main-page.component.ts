@@ -16,4 +16,3 @@ export class MainPageComponent {
   @Input() title: string = 'Welcome to the Main Page';
 
 }
-
