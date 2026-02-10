@@ -3,6 +3,8 @@ import { CategoriesHeaderComponent } from '../../components/categories-header/ca
 import { CategoryFiltersComponent } from '../../components/category-filters/category-filters.component';
 import { PostsGridComponent, type PostGridItem } from '../../components/posts-grid/posts-grid.component';
 import { CategoriesSidebarComponent, type SidebarCategoryItem } from '../../components/categories-sidebar/categories-sidebar.component';
+import { fetchCategoriesOrderedByName } from '../../services/categories.firestore';
+import {getFirestore} from 'firebase/firestore';
 
 
 @Component({
@@ -18,10 +20,12 @@ import { CategoriesSidebarComponent, type SidebarCategoryItem } from '../../comp
   styleUrl: './categories-page.component.css',
 })
 export class CategoriesPageComponent implements OnInit {
+
+  private readonly db = getFirestore();
   // NOTE: wire these into your real categories fetch when ready
   readonly query = signal('');
   readonly selectedCategoryIds = signal<string[]>([]);
-
+  readonly totalPosts = signal<number>(0);
   // Temporary local data until Firestore wiring (keeps UI working)
   readonly posts = signal<PostGridItem[]>([
     {
@@ -53,13 +57,8 @@ export class CategoriesPageComponent implements OnInit {
     },
   ]);
 
-  readonly categories = signal<SidebarCategoryItem[]>([
-    { id: 'home-improvement', name: 'Home Improvement', count: 32 },
-    { id: 'cleaning', name: 'Cleaning', count: 24 },
-    { id: 'organization', name: 'Organization', count: 19 },
-    { id: 'decorating', name: 'Decorating', count: 27 },
-    { id: 'gardening', name: 'Gardening', count: 25 },
-  ]);
+  readonly selectedCategoryNames = signal<string[]>([]);
+  readonly categories = signal<SidebarCategoryItem[]>([]);
 
   readonly filteredPosts = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -79,6 +78,17 @@ export class CategoriesPageComponent implements OnInit {
   });
 
   async ngOnInit() {
+    const cats = await fetchCategoriesOrderedByName(this.db);
+    this.totalPosts.set(cats.reduce((sum, c) => sum + (typeof c.postCount === 'number' ? c.postCount : 0), 0));
+    const selectedCatNames = cats.filter(c => this.selectedCategoryIds().includes(c.id)).map(c => c.name);
+    this.selectedCategoryNames.set(selectedCatNames.length ? selectedCatNames : cats.map(c => c.name));
+    this.categories.set(
+      cats.map((c: { id: any; name: any; }) => ({
+        id: c.id,
+        name: c.name,
+        count: typeof (c as any).postCount === 'number' ? (c as any).postCount : undefined,
+      }))
+    );
   }
 
   onQueryChange(q: string) {
