@@ -108,6 +108,7 @@ export class HomePageComponent implements OnInit {
           const defaultHref = slug ? `/posts/${slug}` : `/posts/${id}`;
           const ctaHref = (o?.ctaHref ?? defaultHref).toString().trim();
           const ctaLabel = (o?.ctaLabel ?? 'Read more').toString().trim();
+          const tags = Array.isArray(post?.tags) ? post.tags.map((t: any) => String(t).trim()).filter(Boolean) : [];
 
           if (!title || !imageUrl) return null;
 
@@ -117,13 +118,13 @@ export class HomePageComponent implements OnInit {
             ctaLabel,
             ctaHref,
             imageUrl,
+            tags,
             // Extra data is fine to carry if your slider ignores it
             // (kept minimal to avoid typing issues)
             postId: id,
           } as any as HeroSlide;
         })
         .filter((x: HeroSlide | null): x is HeroSlide => !!x);
-
       this.heroSlides.set(slides);
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to load main slider.');

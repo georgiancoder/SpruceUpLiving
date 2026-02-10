@@ -23,9 +23,7 @@
           <div class="relative">
             <!-- ...existing chips... -->
             <div class="flex flex-wrap gap-1.5 mb-5">
-              <span class="px-3 py-1.5 text-xs font-semibold rounded-full bg-white/70 border border-amber-300/70 text-amber-800 shadow-sm">Weekend project</span>
-              <span class="px-3 py-1.5 text-xs font-semibold rounded-full bg-white/70 border border-amber-300/70 text-amber-800 shadow-sm">Budget friendly</span>
-              <span class="px-3 py-1.5 text-xs font-semibold rounded-full bg-white/70 border border-amber-300/70 text-amber-800 shadow-sm">Beginner</span>
+              <span *ngFor="let tag of s.tags" class="px-3 py-1.5 text-xs font-semibold rounded-full bg-white/70 border border-amber-300/70 text-amber-800 shadow-sm">{{tag}}</span>
             </div>
 
             <p *ngIf="s.subtitle" class="text-xs uppercase tracking-widest text-amber-700 font-semibold mb-2">
