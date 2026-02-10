@@ -10,7 +10,7 @@ import {
 import { NewsletterSignupComponent } from '../../components/newsletter-signup/newsletter-signup.component';
 import { AboutSectionComponent } from '../../components/about-section/about-section.component';
 import {ContactSectionComponent} from '../../components/contact-section/contact-section.component';
-import {collection, getDocs, getFirestore, orderBy, query} from 'firebase/firestore';
+import {collection, getDocs, getFirestore, orderBy, query, doc, getDoc, documentId, where} from 'firebase/firestore';
 import type { CategoryDoc, CategoryItem } from '../../types/category.types';
 import { fetchLatestPostsOrderedByCreatedAtDesc } from '../../services/posts.firestore';
 
@@ -35,32 +35,7 @@ type PostWithCategories = LatestPost & {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomePageComponent implements OnInit {
-  protected readonly heroSlides: HeroSlide[] = [
-    {
-      title: 'Refresh your space, effortlessly',
-      subtitle: 'Curated home essentials and simple upgrades that make a big impact.',
-      ctaLabel: 'Shop new arrivals',
-      ctaHref: '/about',
-      imageUrl:
-        'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=2000&q=80'
-    },
-    {
-      title: 'Organize smarter',
-      subtitle: 'Storage ideas that keep your home calm and clutter-free.',
-      ctaLabel: 'Explore tips',
-      ctaHref: '/contact',
-      imageUrl:
-        'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=2000&q=80'
-    },
-    {
-      title: 'Make it cozy',
-      subtitle: 'Textures, lighting, and small touches that change everything.',
-      ctaLabel: 'Learn more',
-      ctaHref: '/about',
-      imageUrl:
-        'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=2000&q=80'
-    }
-  ];
+  protected readonly heroSlides = signal<HeroSlide[]>([]);
 
   // fetched from Firestore (enriched with categories)
   readonly latestPosts = signal<PostWithCategories[]>([]);
@@ -79,9 +54,81 @@ export class HomePageComponent implements OnInit {
 
   async ngOnInit() {
     await Promise.all([
+      this.fetchMainSlider(),
       this.fetchCategories(),
       this.fetchLatestPosts(),
     ]);
+  }
+
+  private async fetchMainSlider() {
+    try {
+      const ref = doc(this.db, 'settings', 'mainSlider');
+      const snap = await getDoc(ref);
+
+      const data = snap.exists() ? (snap.data() as any) : null;
+
+      const postIds: string[] = Array.isArray(data?.postIds)
+        ? data.postIds.map((x: any) => String(x)).filter(Boolean)
+        : [];
+
+      // Optional per-slide overrides (array aligned to postIds by index)
+      const overrides: any[] = Array.isArray(data?.slides) ? data.slides : [];
+
+      if (!postIds.length) {
+        this.heroSlides.set([]);
+        return;
+      }
+      // Fetch posts by IDs (Firestore "in" supports max 10 per query); chunk to be safe
+      const postsById = new Map<string, any>();
+      const chunkSize = 10;
+
+      for (let i = 0; i < postIds.length; i += chunkSize) {
+        const chunk = postIds.slice(i, i + chunkSize);
+        const q = query(collection(this.db, 'posts'), where(documentId(), 'in', chunk));
+        const s = await getDocs(q);
+        s.forEach((d) => postsById.set(d.id, { id: d.id, ...d.data() }));
+      }
+
+      const slides: HeroSlide[] = postIds
+        .map((id, idx) => {
+          const post = postsById.get(id);
+          if (!post) return null;
+          const o = overrides[idx] ?? {};
+
+          const title = (o?.title ?? post?.title ?? '').toString().trim();
+          const subtitle = (o?.subtitle ?? post?.description ?? '').toString().trim();
+
+          // try common image fields; allow override
+          const imageUrl = (o?.imageUrl ?? post?.main_img ?? '')
+            .toString()
+            .trim();
+
+          // Default CTA points to post detail; allow override
+          const slug = (post?.slug ?? '').toString().trim();
+          const defaultHref = slug ? `/posts/${slug}` : `/posts/${id}`;
+          const ctaHref = (o?.ctaHref ?? defaultHref).toString().trim();
+          const ctaLabel = (o?.ctaLabel ?? 'Read more').toString().trim();
+
+          if (!title || !imageUrl) return null;
+
+          return {
+            title,
+            subtitle,
+            ctaLabel,
+            ctaHref,
+            imageUrl,
+            // Extra data is fine to carry if your slider ignores it
+            // (kept minimal to avoid typing issues)
+            postId: id,
+          } as any as HeroSlide;
+        })
+        .filter((x: HeroSlide | null): x is HeroSlide => !!x);
+
+      this.heroSlides.set(slides);
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to load main slider.');
+      this.heroSlides.set([]);
+    }
   }
 
   private async fetchLatestPosts() {
