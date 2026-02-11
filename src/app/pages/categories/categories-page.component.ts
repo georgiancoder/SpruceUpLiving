@@ -8,6 +8,7 @@ import { getFirestore, collection, getDocs, orderBy, query as fsQuery } from 'fi
 import { CategoryItem } from '../../types/category.types';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { estimateReadingMinutesFromPost } from '../../utils/reading-time';
 
 
 @Component({
@@ -69,7 +70,8 @@ export class CategoriesPageComponent implements OnInit {
 
       const items: PostGridItem[] = snap.docs.map((d) => {
         const data = d.data() as any;
-        return {
+
+        const base = {
           id: d.id,
           title: String(data.title ?? ''),
           description: String(data.description ?? ''),
@@ -77,7 +79,11 @@ export class CategoriesPageComponent implements OnInit {
           main_img: String(data.main_img ?? ''),
           category_ids: Array.isArray(data.category_ids) ? data.category_ids.map(String) : [],
           tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
-        };
+        } as any;
+
+        base.readMinutes = estimateReadingMinutesFromPost(data);
+
+        return base as PostGridItem;
       });
 
       this.posts.set(items);

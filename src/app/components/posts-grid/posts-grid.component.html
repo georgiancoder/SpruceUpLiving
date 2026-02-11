@@ -41,6 +41,11 @@
           @if (asDate(p.created_at)) {
             <span>{{ asDate(p.created_at) | date: 'mediumDate' }}</span>
           }
+
+          @if (p.readMinutes) {
+            <span class="text-slate-400">•</span>
+            <span>{{ p.readMinutes }} min read</span>
+          }
         </div>
       </div>
     </article>

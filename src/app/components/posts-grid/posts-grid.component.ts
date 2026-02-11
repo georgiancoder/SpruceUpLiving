@@ -10,6 +10,7 @@ export type PostGridItem = {
   main_img?: string;
   category_ids?: string[];
   tags?: string[];
+  readMinutes?: number | null;
 };
 
 @Component({

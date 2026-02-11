@@ -45,4 +45,3 @@ export class CategoryFiltersComponent {
 
   trackById = (_: number, x: CategoryFilterItem) => x.id;
 }
-
