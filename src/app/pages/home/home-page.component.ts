@@ -178,7 +178,7 @@ export class HomePageComponent implements OnInit {
           const item = {
             id: d.id,
             title: name,
-            href: `/categories/${slug}`,
+            href: `#/categories/${slug}`,
             description: typeof data.description === 'string' ? data.description : undefined,
             count: typeof data.postCount === 'number' ? data.postCount : undefined,
             countLabel: 'articles',
