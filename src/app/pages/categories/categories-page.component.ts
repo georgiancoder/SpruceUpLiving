@@ -6,7 +6,7 @@ import { CategoriesSidebarComponent } from '../../components/categories-sidebar/
 import { fetchCategoriesOrderedByName } from '../../services/categories.firestore';
 import { getFirestore } from 'firebase/firestore';
 import { CategoryItem } from '../../types/category.types';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 
@@ -25,6 +25,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class CategoriesPageComponent implements OnInit {
   private readonly db = getFirestore();
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   // NOTE: wire these into your real categories fetch when ready
@@ -121,10 +122,25 @@ export class CategoriesPageComponent implements OnInit {
   onSelectedIdsChange(ids: string[]) {
     this.selectedCategoryIds.set(ids);
     this.setHeaderText(this.categories().filter(c => this.selectedCategoryIds().includes(c.id)));
+
+    // Update URL to reflect current selection: /categories or /categories/:slug[_slug...]
+    const slugs = this.categories()
+      .filter((c) => ids.includes(c.id))
+      .map((c) => (c.slug ?? '').trim())
+      .filter(Boolean);
+
+    if (slugs.length === 0) {
+      this.router.navigate(['/categories']);
+      return;
+    }
+
+    this.router.navigate(['/categories', slugs.join('_')]);
   }
 
   onClearFilters() {
     this.query.set('');
     this.selectedCategoryIds.set([]);
+    this.setHeaderText(this.categories());
+    this.router.navigate(['/categories']);
   }
 }
