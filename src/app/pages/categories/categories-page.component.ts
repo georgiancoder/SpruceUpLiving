@@ -1,11 +1,13 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import {Component, OnInit, computed, signal, inject, DestroyRef} from '@angular/core';
 import { CategoriesHeaderComponent } from '../../components/categories-header/categories-header.component';
 import { CategoryFiltersComponent } from '../../components/category-filters/category-filters.component';
 import { PostsGridComponent, type PostGridItem } from '../../components/posts-grid/posts-grid.component';
 import { CategoriesSidebarComponent } from '../../components/categories-sidebar/categories-sidebar.component';
 import { fetchCategoriesOrderedByName } from '../../services/categories.firestore';
-import {getFirestore} from 'firebase/firestore';
-import {CategoryItem} from '../../types/category.types';
+import { getFirestore } from 'firebase/firestore';
+import { CategoryItem } from '../../types/category.types';
+import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 
 @Component({
@@ -21,8 +23,10 @@ import {CategoryItem} from '../../types/category.types';
   styleUrl: './categories-page.component.css',
 })
 export class CategoriesPageComponent implements OnInit {
-
   private readonly db = getFirestore();
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+
   // NOTE: wire these into your real categories fetch when ready
   readonly query = signal('');
   readonly selectedCategoryIds = signal<string[]>([]);
@@ -86,15 +90,28 @@ export class CategoriesPageComponent implements OnInit {
 
   async ngOnInit() {
     const cats = await fetchCategoriesOrderedByName(this.db);
-    this.setHeaderText(cats);
     this.categories.set(
       cats.map((c) => ({
         id: c.id,
         postCount: typeof (c as any).postCount === 'number' ? (c as any).postCount : undefined,
         title: c.title,
-        href: c.href
-      }))
+        href: c.href,
+        slug: c.slug,
+      })),
     );
+
+    // If /categories/:categoryId is present, preselect it
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
+      const categorySlugs = (pm.get('categoryId')?.trim() ?? '').split('_');
+      if (!categorySlugs) {
+        this.selectedCategoryIds.set([]);
+        this.setHeaderText(this.categories());
+        return;
+      }
+      const categoryIds = this.categories().filter((c) => c.slug && categorySlugs.includes(c.slug));
+      this.selectedCategoryIds.set(categoryIds.length ? [...categoryIds.map(c => c.id)] : []);
+      this.setHeaderText(categoryIds.length ? categoryIds : this.categories());
+    });
   }
 
   onQueryChange(q: string) {

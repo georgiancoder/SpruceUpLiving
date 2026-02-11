@@ -23,6 +23,7 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: "full", component: HomePageComponent },
       { path: 'categories', component: CategoriesPageComponent },
+      { path: 'categories/:categoryId', component: CategoriesPageComponent },
     ]
   },
 
