@@ -14,6 +14,7 @@ import { AdminCategoriesPageComponent } from './pages/admin/categories/admin-cat
 import { AdminMenuPageComponent } from './pages/admin/menu/admin-menu-page.component';
 import { AdminSliderPageComponent } from './pages/admin/slider/admin-slider.component';
 import { CategoriesPageComponent } from './pages/categories/categories-page.component';
+import { PostPageComponent } from './pages/post/post-page.component';
 
 export const routes: Routes = [
   // Root shows login
@@ -24,6 +25,7 @@ export const routes: Routes = [
       { path: '', pathMatch: "full", component: HomePageComponent },
       { path: 'categories', component: CategoriesPageComponent },
       { path: 'categories/:categoryId', component: CategoriesPageComponent },
+      { path: 'post/:postId', component: PostPageComponent },
     ]
   },
 

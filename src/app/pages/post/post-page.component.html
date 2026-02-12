@@ -1,0 +1,108 @@
+<section class="mx-auto w-full">
+  <div class="mx-auto w-full max-w-4xl px-4 pt-6 sm:px-6 lg:px-8">
+    <a routerLink="/categories" class="text-sm font-medium text-slate-700 hover:text-slate-900">
+      ← Back to categories
+    </a>
+  </div>
+
+  @if (loading()) {
+    <div class="mx-auto mt-6 w-full max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div class="rounded-xl border border-slate-200 bg-white p-4 text-slate-700">Loading…</div>
+    </div>
+  } @else if (error()) {
+    <div class="mx-auto mt-6 w-full max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800">{{ error() }}</div>
+    </div>
+  } @else if (post(); as p) {
+    <main>
+      <!-- Hero image & post header (no author, no comments count) -->
+      <article class="mx-auto max-w-4xl px-4 pb-10 pt-10 sm:px-6 lg:px-8 lg:pb-16 lg:pt-16">
+        <!-- Hero image -->
+        <div
+          class="group relative mb-12 overflow-hidden rounded-3xl shadow-2xl shadow-amber-300/50 lg:mb-16"
+        >
+          @if (p.mainImgUrl) {
+            <img
+              [src]="p.mainImgUrl"
+              [alt]="p.title"
+              class="h-[60vh] w-full object-cover transition-transform duration-1000 group-hover:scale-105 lg:h-[70vh]"
+              loading="lazy"
+            />
+          } @else {
+            <div class="h-[60vh] w-full bg-gradient-to-br from-amber-200/60 via-orange-200/40 to-amber-400/30 lg:h-[70vh]"></div>
+          }
+
+          <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+
+          <!-- Category/Tag badges -->
+          @if (p.tags.length) {
+            <div class="absolute left-6 top-6 flex flex-wrap gap-2">
+              @for (t of p.tags; track t) {
+                <span
+                  class="border border-amber-300/70 bg-white/95 px-3 py-1.5 text-xs font-semibold text-amber-800 shadow-lg"
+                  style="border-radius: 9999px;"
+                >
+                  {{ t }}
+                </span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Post metadata (simplified) -->
+        <div class="mb-8 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+          <div class="flex items-center gap-2">
+            <span class="rounded-full bg-slate-100/80 px-3 py-1 text-xs font-semibold text-slate-800">
+              SpruceUpLiving
+            </span>
+
+            @if (asDate(p.createdAt); as d) {
+              <span>• Published {{ d | date: 'mediumDate' }}</span>
+            }
+
+            <!-- optional read time if your VM provides it -->
+<!--            @if ((p as any).readMinutes) {-->
+<!--              <span>• {{ (p as any).readMinutes }} min read</span>-->
+<!--            }-->
+          </div>
+
+          <!-- optional actions placeholder (kept minimal) -->
+          <div class="flex items-center gap-4">
+            <!-- ...existing code... -->
+          </div>
+        </div>
+
+        <!-- Post title -->
+        <h1 class="mb-8 text-4xl font-bold leading-tight text-slate-900 lg:mb-12 lg:text-5xl">
+          {{ p.title }}
+          <span
+            class="bg-gradient-to-r from-amber-600 via-orange-500 to-amber-700 bg-clip-text text-transparent"
+          >
+            <!-- visual accent only -->
+          </span>
+        </h1>
+      </article>
+
+      <!-- Main content -->
+      <section class="prose prose-lg mx-auto max-w-4xl px-4 pb-24 sm:px-6 lg:px-8">
+        @if (p.description) {
+          <p class="text-xl leading-relaxed text-slate-700">
+            {{ p.description }}
+          </p>
+        }
+
+        <div class="mt-10 max-w-none">
+          <div [innerHTML]="p.contentHtml"></div>
+        </div>
+      </section>
+
+      <!-- Related posts (placeholder; keep your existing section if/when implemented) -->
+      <!-- ...existing code... -->
+    </main>
+  } @else {
+    <div class="mx-auto mt-6 w-full max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div class="rounded-xl border border-slate-200 bg-white p-4 text-slate-700">No post selected.</div>
+    </div>
+  }
+</section>
+
