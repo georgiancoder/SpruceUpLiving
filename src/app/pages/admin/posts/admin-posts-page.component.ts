@@ -16,11 +16,13 @@ import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'fire
 import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
 import { fetchPostsOrderedByCreatedAtDesc, type AdminPost } from '../../../services/posts.firestore';
 import {CategoryItem} from '../../../types/category.types';
+  import { QuillModule } from 'ngx-quill';
+import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-admin-posts-page',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, QuillModule, FormsModule],
   templateUrl: 'admin-posts.component.html'
 })
 export class AdminPostsPageComponent implements OnInit {
@@ -67,6 +69,19 @@ export class AdminPostsPageComponent implements OnInit {
   readonly editSelectedTags = signal<string[]>([]);
   readonly editMainImgFile = signal<File | null>(null);
   readonly editMainImgPreviewUrl = signal<string | null>(null);
+
+  // optional: keep toolbar consistent across create/edit editors
+  readonly quillModules = {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ header: [1, 2, 3, false] }],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['blockquote', 'code-block'],
+      ['link', 'image'],
+      [{ align: [] }],
+      ['clean'],
+    ],
+  };
 
   readonly canAddPost = computed(() => {
     return (

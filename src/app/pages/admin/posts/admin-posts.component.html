@@ -124,13 +124,20 @@
 
       <div class="sm:col-span-6">
         <label class="block text-xs font-medium text-slate-600">content</label>
-        <textarea
-          rows="6"
-          class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
-          [value]="content()"
-          (input)="content.set(($any($event.target).value))"
-          placeholder="post content"
-        ></textarea>
+
+        <div class="mt-1 w-full">
+          <quill-editor
+            class="block w-full"
+            style="width: 100%; display: block;"
+            [styles]="{ width: '100%' }"
+            [modules]="quillModules"
+            [ngModel]="content()"
+            (ngModelChange)="content.set($event)"
+            [readOnly]="loading()"
+          ></quill-editor>
+        </div>
+
+        <div class="mt-1 text-[11px] text-slate-500">Content is stored as HTML.</div>
       </div>
 
       <div class="sm:col-span-6">
@@ -236,13 +243,20 @@
                       }
                     </div>
 
-                    <textarea
-                      rows="4"
-                      class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
-                      [value]="editContent()"
-                      (input)="editContent.set(($any($event.target).value))"
-                      placeholder="content"
-                    ></textarea>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-medium text-slate-600">content</label>
+                      <div class="w-full">
+                        <quill-editor
+                          class="block w-full"
+                          style="width: 100%; display: block;"
+                          [styles]="{ width: '100%' }"
+                          [modules]="quillModules"
+                          [ngModel]="editContent()"
+                          (ngModelChange)="editContent.set($event)"
+                          [readOnly]="loading()"
+                        ></quill-editor>
+                      </div>
+                    </div>
                   </div>
                 } @else {
                   <div class="flex gap-3">
