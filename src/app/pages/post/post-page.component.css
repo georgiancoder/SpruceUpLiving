@@ -1,2 +1,81 @@
 /* minimal; Tailwind handles layout */
 /* ...existing code... */
+
+/* Remove Tailwind Typography ("prose") styling from the injected HTML only */
+:host ::ng-deep .post-content-reset {
+  font: inherit;
+  color: inherit;
+  line-height: inherit;
+}
+
+:host ::ng-deep .post-content-reset :where(h1, h2, h3, h4, h5, h6) {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+:host ::ng-deep .post-content-reset :where(p) {
+  margin: 0;
+  color: inherit;
+}
+
+/* Reset lists back to browser defaults */
+:host ::ng-deep .post-content-reset :where(ul, ol) {
+  margin: revert;
+  padding: revert;
+  list-style: revert;
+}
+
+:host ::ng-deep .post-content-reset :where(li) {
+  margin: revert;
+  padding: revert;
+  list-style: revert;
+}
+
+:host ::ng-deep .post-content-reset :where(a) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+:host ::ng-deep .post-content-reset :where(img, video, iframe) {
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+:host ::ng-deep .post-content-reset :where(blockquote) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+}
+
+:host ::ng-deep .post-content-reset :where(pre, code) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 0.95em;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+}
+
+:host ::ng-deep .post-content-reset :where(hr) {
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.2;
+  margin: 0;
+}
+
+:host ::ng-deep .post-content-reset :where(table) {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+:host ::ng-deep .post-content-reset :where(th, td) {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  padding: 0.5rem;
+  vertical-align: top;
+}
