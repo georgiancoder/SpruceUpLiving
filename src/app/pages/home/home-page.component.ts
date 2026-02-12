@@ -13,6 +13,9 @@ import {ContactSectionComponent} from '../../components/contact-section/contact-
 import {collection, getDocs, getFirestore, orderBy, query, doc, getDoc, documentId, where} from 'firebase/firestore';
 import type { CategoryDoc, CategoryItem } from '../../types/category.types';
 import { fetchLatestPostsOrderedByCreatedAtDesc } from '../../services/posts.firestore';
+import {
+  estimateReadingMinutesFromPost,
+} from '../../utils/reading-time';
 
 type PostWithCategories = LatestPost & {
   category_ids?: string[];
@@ -58,38 +61,6 @@ export class HomePageComponent implements OnInit {
       this.fetchCategories(),
       this.fetchLatestPosts(),
     ]);
-  }
-
-  private estimateReadingMinutesFromText(input: unknown, wpm = 200): number | null {
-    const text = typeof input === 'string' ? input : '';
-    const normalized = text
-      .replace(/<[^>]+>/g, ' ') // strip HTML
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    if (!normalized) return null;
-
-    const words = normalized.split(' ').filter(Boolean).length;
-    const minutes = Math.max(1, Math.ceil(words / wpm));
-    return Number.isFinite(minutes) ? minutes : null;
-  }
-
-  private estimateReadingMinutesFromPost(post: any): number | null {
-    // Try common fields; adjust to your post schema if needed
-    const candidates = [
-      post?.content,
-      post?.body,
-      post?.html,
-      post?.markdown,
-      post?.excerpt,
-      post?.description,
-    ];
-
-    const combined = candidates
-      .filter((x: any) => typeof x === 'string' && x.trim().length)
-      .join('\n\n');
-
-    return this.estimateReadingMinutesFromText(combined);
   }
 
   private async fetchMainSlider() {
@@ -144,7 +115,7 @@ export class HomePageComponent implements OnInit {
 
           if (!title || !imageUrl) return null;
 
-          const readMinutes = this.estimateReadingMinutesFromPost(post);
+          const readMinutes = estimateReadingMinutesFromPost(post);
 
           return {
             title,
@@ -207,7 +178,7 @@ export class HomePageComponent implements OnInit {
           const item = {
             id: d.id,
             title: name,
-            href: `/categories/${slug}`,
+            href: `#/categories/${slug}`,
             description: typeof data.description === 'string' ? data.description : undefined,
             count: typeof data.postCount === 'number' ? data.postCount : undefined,
             countLabel: 'articles',

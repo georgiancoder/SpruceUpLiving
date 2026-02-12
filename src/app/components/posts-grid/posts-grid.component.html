@@ -1,0 +1,57 @@
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
+  @for (p of posts; track trackById($index, p)) {
+    <article
+      class="group bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl hover:shadow-amber-200/50 hover:-translate-y-1 transition-all duration-300 border border-amber-200/60 overflow-hidden"
+    >
+      @if (p.main_img) {
+        <a [routerLink]="['/posts', p.id]" class="block">
+          <img
+            class="h-40 w-full object-cover"
+            [src]="p.main_img"
+            [alt]="p.title"
+            loading="lazy"
+          />
+        </a>
+      } @else {
+        <div class="h-40 bg-gradient-to-br from-emerald-200/60 to-emerald-400/40 shadow-md"></div>
+      }
+
+      <div class="p-5 pb-6">
+        @if (p.tags?.length) {
+          <div class="flex flex-wrap gap-2 mb-3">
+            @for (t of p.tags!.slice(0, 2); track t) {
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300/70">
+                {{ t }}
+              </span>
+            }
+          </div>
+        }
+
+        <a [routerLink]="['/posts', p.id]">
+          <h3 class="text-lg font-bold text-slate-900 leading-tight group-hover:text-amber-900 mb-3 line-clamp-2">
+            {{ p.title }}
+          </h3>
+        </a>
+
+        @if (p.description) {
+          <p class="text-sm text-slate-700 line-clamp-2 mb-4">{{ p.description }}</p>
+        }
+
+        <div class="flex items-center gap-2 text-xs text-slate-600">
+          @if (asDate(p.created_at)) {
+            <span>{{ asDate(p.created_at) | date: 'mediumDate' }}</span>
+          }
+
+          @if (p.readMinutes) {
+            <span class="text-slate-400">•</span>
+            <span>{{ p.readMinutes }} min read</span>
+          }
+        </div>
+      </div>
+    </article>
+  } @empty {
+    <div class="md:col-span-2 xl:col-span-3 rounded-2xl border border-amber-200/60 bg-white/80 p-8 text-center text-slate-600">
+      No posts found.
+    </div>
+  }
+</div>

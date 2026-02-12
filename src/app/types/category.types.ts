@@ -4,8 +4,8 @@ export type CategoryItem = {
   href: string;
   description?: string;
   imageUrl?: string;
-
-  count?: number;
+  slug?: string;
+  postCount?: number;
   countLabel?: string; // e.g. "articles"
 };
 

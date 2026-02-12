@@ -102,7 +102,7 @@
           [disabled]="loading() || categoriesLoading()"
         >
           @for (c of categories(); track c.id) {
-            <option [value]="c.id" [selected]="selectedCategoryIds().includes(c.id)">{{ c.name }}</option>
+            <option [value]="c.id" [selected]="selectedCategoryIds().includes(c.id)">{{ c.title }}</option>
           }
         </select>
         <div class="mt-1 text-[11px] text-slate-500">
@@ -292,7 +292,7 @@
                     [disabled]="loading() || categoriesLoading()"
                   >
                     @for (c of categories(); track c.id) {
-                      <option [value]="c.id" [selected]="editSelectedCategoryIds().includes(c.id)">{{ c.name }}</option>
+                      <option [value]="c.id" [selected]="editSelectedCategoryIds().includes(c.id)">{{ c.title }}</option>
                     }
                   </select>
                 } @else {

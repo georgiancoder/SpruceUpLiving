@@ -10,18 +10,20 @@ import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-das
 
 import { adminAuthGuard } from './guards/admin-auth.guard';
 import { redirectAuthedFromAdminLoginGuard } from './guards/redirect-authed-from-admin-login.guard';
-import {AdminCategoriesPageComponent} from './pages/admin/categories/admin-categories-page.component';
-import {AdminMenuPageComponent} from './pages/admin/menu/admin-menu-page.component';
-import {AdminSliderPageComponent} from './pages/admin/slider/admin-slider.component';
+import { AdminCategoriesPageComponent } from './pages/admin/categories/admin-categories-page.component';
+import { AdminMenuPageComponent } from './pages/admin/menu/admin-menu-page.component';
+import { AdminSliderPageComponent } from './pages/admin/slider/admin-slider.component';
+import { CategoriesPageComponent } from './pages/categories/categories-page.component';
 
 export const routes: Routes = [
   // Root shows login
   {
     path: '',
-    pathMatch: 'full',
     component: MainPageComponent,
     children: [
-      { path: '', component: HomePageComponent },
+      { path: '', pathMatch: "full", component: HomePageComponent },
+      { path: 'categories', component: CategoriesPageComponent },
+      { path: 'categories/:categoryId', component: CategoriesPageComponent },
     ]
   },
 
@@ -40,5 +42,4 @@ export const routes: Routes = [
     ],
   },
 
-  { path: '**', redirectTo: '' },
 ];

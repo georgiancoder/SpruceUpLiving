@@ -1,0 +1,30 @@
+<div class="flex flex-wrap gap-2 lg:gap-3 mb-10">
+  <!-- All -->
+  <button
+    type="button"
+    (click)="onClear()"
+    class="px-4 py-2 rounded-xl border text-sm transition-all"
+    [ngClass]="{
+      'bg-amber-100/80 border-amber-200/70 text-amber-800 font-semibold': selectedIds.length === 0,
+      'bg-white/90 border-slate-200/70 text-slate-800 font-medium': selectedIds.length !== 0
+    }"
+  >
+    All
+  </button>
+
+  <!-- Categories -->
+  @for (c of categories; track c.id) {
+    <button
+      type="button"
+      (click)="toggleCategory(c.id, !selectedIds.includes(c.id))"
+      class="px-4 py-2 rounded-xl border text-sm transition-all"
+      [ngClass]="{
+        'bg-amber-100/80 border-amber-200/70 text-amber-800 font-semibold': selectedIds.includes(c.id),
+        'bg-white/90 border-slate-200/70 text-slate-800 font-medium': !selectedIds.includes(c.id)
+      }"
+    >
+      {{ c.title }}<span class="text-slate-500"> {{c.postCount}} </span>
+    </button>
+
+  }
+</div>
