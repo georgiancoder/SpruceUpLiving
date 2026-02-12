@@ -25,7 +25,7 @@ export class ContactSectionComponent {
   errorMsg: string | null = null;
 
   private readonly endpoint =
-    'http://127.0.0.1:5001/spruceupliving-d48ba/us-central1/sendEmail';
+    'https://us-central1-spruceupliving-d48ba.cloudfunctions.net/sendMail';
 
   async onSubmit(form: NgForm) {
     if (!form.valid || this.sending) return;
