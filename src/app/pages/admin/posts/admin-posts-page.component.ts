@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import {Component, OnInit, signal, computed, ViewChild} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
@@ -12,12 +12,12 @@ import {
   writeBatch,
   updateDoc,
 } from 'firebase/firestore';
-import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes, uploadBytesResumable } from 'firebase/storage';
+import {QuillEditorComponent, QuillModule} from 'ngx-quill';
+import { FormsModule } from '@angular/forms';
 import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
 import { fetchPostsOrderedByCreatedAtDesc, type AdminPost } from '../../../services/posts.firestore';
 import {CategoryItem} from '../../../types/category.types';
-  import { QuillModule } from 'ngx-quill';
-import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-admin-posts-page',
@@ -29,9 +29,18 @@ export class AdminPostsPageComponent implements OnInit {
   private readonly db = getFirestore();
   private readonly storage = getStorage();
 
+  @ViewChild('createQuillEditor') createQuillRef?: QuillEditorComponent;
+  @ViewChild('editQuillEditor') editQuillRef?: QuillEditorComponent;
+
+  // track which editor invoked the toolbar handler
+  protected activeQuillTarget: 'create' | 'edit' = 'create';
+
   readonly posts = signal<AdminPost[]>([]);
   readonly loading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  readonly uploadingQuillImage = signal<boolean>(false);
+  readonly quillImageUploadProgress = signal<number>(0);
 
   // form state (matches provided JSON)
   readonly title = signal<string>('');
@@ -72,15 +81,20 @@ export class AdminPostsPageComponent implements OnInit {
 
   // optional: keep toolbar consistent across create/edit editors
   readonly quillModules = {
-    toolbar: [
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ header: [1, 2, 3, false] }],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      ['blockquote', 'code-block'],
-      ['link', 'image'],
-      [{ align: [] }],
-      ['clean'],
-    ],
+    toolbar: {
+      container: [
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ header: [1, 2, 3, false] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['blockquote', 'code-block'],
+        ['link', 'image'],
+        [{ align: [] }],
+        ['clean'],
+      ],
+      handlers: {
+        image: () => this.pickAndUploadQuillImage(),
+      },
+    },
   };
 
   readonly canAddPost = computed(() => {
@@ -474,5 +488,70 @@ export class AdminPostsPageComponent implements OnInit {
 
   protected onTagsChange(s: string) {
     this.editSelectedTags.set(s.split(',').map((s: string) => s.trim()).filter(Boolean))
+  }
+
+  private pickAndUploadQuillImage() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      await this.uploadQuillImageAndInsert(file);
+    };
+  }
+
+  private getActiveQuillInstance(): any | null {
+    const ref = this.activeQuillTarget === 'edit' ? this.editQuillRef : this.createQuillRef;
+    // ngx-quill exposes the Quill instance as `.quillEditor`
+    return (ref as any)?.quillEditor ?? null;
+  }
+
+  private async uploadQuillImageAndInsert(file: File) {
+    const quill = this.getActiveQuillInstance();
+    if (!quill) {
+      this.error.set('Quill editor not ready.');
+      return;
+    }
+
+    this.uploadingQuillImage.set(true);
+    this.quillImageUploadProgress.set(0);
+    this.error.set(null);
+
+    try {
+      const safeName = (file.name || 'image').replace(/[^\w.\-]+/g, '_');
+      const path = `post-content-images/${Date.now()}_${crypto.randomUUID()}_${safeName}`;
+      const storageRef = ref(this.storage, path);
+
+      const task = uploadBytesResumable(storageRef, file, { contentType: file.type || undefined });
+
+      await new Promise<void>((resolve, reject) => {
+        task.on(
+          'state_changed',
+          (snap) => {
+            const total = snap.totalBytes || 0;
+            const done = snap.bytesTransferred || 0;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            this.quillImageUploadProgress.set(pct);
+          },
+          (err) => reject(err),
+          () => resolve()
+        );
+      });
+
+      const url = await getDownloadURL(storageRef);
+
+      const range = quill.getSelection?.(true);
+      const index = range?.index ?? quill.getLength?.() ?? 0;
+      quill.insertEmbed(index, 'image', url, 'user');
+      quill.setSelection(index + 1, 0, 'silent');
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to upload image');
+    } finally {
+      this.uploadingQuillImage.set(false);
+      this.quillImageUploadProgress.set(0);
+    }
   }
 }
