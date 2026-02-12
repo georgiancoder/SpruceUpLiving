@@ -20,29 +20,49 @@ export class ContactSectionComponent {
   @Input() ctaLabel?: string;
   @Input() ctaHref?: string;
 
-  onSubmit(form: NgForm) {
-    if (!form.valid) return;
+  sending = false;
+  sent = false;
+  errorMsg: string | null = null;
 
-    const to = 'info@spruceupliving.com';
+  private readonly endpoint =
+    'http://127.0.0.1:5001/spruceupliving-d48ba/us-central1/sendEmail';
+
+  async onSubmit(form: NgForm) {
+    if (!form.valid || this.sending) return;
+
+    this.sending = true;
+    this.sent = false;
+    this.errorMsg = null;
 
     const name = (form.value?.name ?? '').toString().trim();
     const from = (form.value?.from ?? '').toString().trim();
     const subject = (form.value?.subject ?? '').toString().trim();
     const message = (form.value?.message ?? '').toString().trim();
 
-    const mailSubject = subject || 'Contact form message';
-    const bodyLines = [
-      `Name: ${name}`,
-      `Email: ${from}`,
-      '',
-      message
-    ];
+    try {
+      const res = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Adjust keys if your CF expects different field names
+        body: JSON.stringify({
+          name,
+          email: from,
+          subject: subject || 'Contact form message',
+          message
+        })
+      });
 
-    const mailto =
-      `mailto:${encodeURIComponent(to)}` +
-      `?subject=${encodeURIComponent(mailSubject)}` +
-      `&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Request failed (${res.status})`);
+      }
 
-    window.location.href = mailto;
+      this.sent = true;
+      form.resetForm();
+    } catch (e) {
+      this.errorMsg = e instanceof Error ? e.message : 'Failed to send message';
+    } finally {
+      this.sending = false;
+    }
   }
 }
