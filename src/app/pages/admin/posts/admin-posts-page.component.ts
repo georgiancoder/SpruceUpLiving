@@ -1,4 +1,4 @@
-import {Component, OnInit, signal, computed, ViewChild} from '@angular/core';
+import {Component, OnInit, signal, computed} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
@@ -13,34 +13,29 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes, uploadBytesResumable } from 'firebase/storage';
-import {QuillEditorComponent, QuillModule} from 'ngx-quill';
 import { FormsModule } from '@angular/forms';
-import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
+import { EditorModule } from '@tinymce/tinymce-angular';
+import { fetchCategoriesOrderedByName } from '../../../services/categories.firestore';
 import { fetchPostsOrderedByCreatedAtDesc, type AdminPost } from '../../../services/posts.firestore';
 import {CategoryItem} from '../../../types/category.types';
 
 @Component({
   selector: 'app-admin-posts-page',
   standalone: true,
-  imports: [DatePipe, RouterLink, QuillModule, FormsModule],
+  imports: [DatePipe, RouterLink, EditorModule, FormsModule],
   templateUrl: 'admin-posts.component.html'
 })
 export class AdminPostsPageComponent implements OnInit {
   private readonly db = getFirestore();
   private readonly storage = getStorage();
 
-  @ViewChild('createQuillEditor') createQuillRef?: QuillEditorComponent;
-  @ViewChild('editQuillEditor') editQuillRef?: QuillEditorComponent;
-
-  // track which editor invoked the toolbar handler
-  protected activeQuillTarget: 'create' | 'edit' = 'create';
-
   readonly posts = signal<AdminPost[]>([]);
   readonly loading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
 
-  readonly uploadingQuillImage = signal<boolean>(false);
-  readonly quillImageUploadProgress = signal<number>(0);
+  // editor image upload progress state (used by TinyMCE `images_upload_handler`)
+  readonly uploadingEditorImage = signal<boolean>(false);
+  readonly editorImageUploadProgress = signal<number>(0);
 
   // form state (matches provided JSON)
   readonly title = signal<string>('');
@@ -79,21 +74,18 @@ export class AdminPostsPageComponent implements OnInit {
   readonly editMainImgFile = signal<File | null>(null);
   readonly editMainImgPreviewUrl = signal<string | null>(null);
 
-  // optional: keep toolbar consistent across create/edit editors
-  readonly quillModules = {
-    toolbar: {
-      container: [
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ header: [1, 2, 3, false] }],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        ['blockquote', 'code-block'],
-        ['link', 'image'],
-        [{ align: [] }],
-        ['clean'],
-      ],
-      handlers: {
-        image: () => this.pickAndUploadQuillImage(),
-      },
+  // TinyMCE editor config (shared between create/edit)
+  readonly tinyMceInit: Record<string, any> = {
+    apiKey: 'd4j3xne2ooctby1b3c0xmbi0jq1ghgrf9pznbks3nbtda698',
+    height: 360,
+    menubar: false,
+    branding: false,
+    plugins: 'lists link image code autoresize',
+    toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link image | code',
+    content_style: 'img{max-width:100%;height:auto;}',
+    images_upload_handler: async (blobInfo: any) => {
+      const file: File = blobInfo.blob();
+      return await this.uploadEditorImage(file);
     },
   };
 
@@ -490,34 +482,9 @@ export class AdminPostsPageComponent implements OnInit {
     this.editSelectedTags.set(s.split(',').map((s: string) => s.trim()).filter(Boolean))
   }
 
-  private pickAndUploadQuillImage() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.click();
-
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      await this.uploadQuillImageAndInsert(file);
-    };
-  }
-
-  private getActiveQuillInstance(): any | null {
-    const ref = this.activeQuillTarget === 'edit' ? this.editQuillRef : this.createQuillRef;
-    // ngx-quill exposes the Quill instance as `.quillEditor`
-    return (ref as any)?.quillEditor ?? null;
-  }
-
-  private async uploadQuillImageAndInsert(file: File) {
-    const quill = this.getActiveQuillInstance();
-    if (!quill) {
-      this.error.set('Quill editor not ready.');
-      return;
-    }
-
-    this.uploadingQuillImage.set(true);
-    this.quillImageUploadProgress.set(0);
+  private async uploadEditorImage(file: File): Promise<string> {
+    this.uploadingEditorImage.set(true);
+    this.editorImageUploadProgress.set(0);
     this.error.set(null);
 
     try {
@@ -534,24 +501,20 @@ export class AdminPostsPageComponent implements OnInit {
             const total = snap.totalBytes || 0;
             const done = snap.bytesTransferred || 0;
             const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-            this.quillImageUploadProgress.set(pct);
+            this.editorImageUploadProgress.set(pct);
           },
           (err) => reject(err),
           () => resolve()
         );
       });
 
-      const url = await getDownloadURL(storageRef);
-
-      const range = quill.getSelection?.(true);
-      const index = range?.index ?? quill.getLength?.() ?? 0;
-      quill.insertEmbed(index, 'image', url, 'user');
-      quill.setSelection(index + 1, 0, 'silent');
+      return await getDownloadURL(storageRef);
     } catch (e: any) {
       this.error.set(e?.message ?? 'Failed to upload image');
+      throw e;
     } finally {
-      this.uploadingQuillImage.set(false);
-      this.quillImageUploadProgress.set(0);
+      this.uploadingEditorImage.set(false);
+      this.editorImageUploadProgress.set(0);
     }
   }
 }

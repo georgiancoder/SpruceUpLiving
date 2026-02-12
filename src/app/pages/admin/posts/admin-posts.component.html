@@ -126,29 +126,27 @@
         <label class="block text-xs font-medium text-slate-600">content</label>
 
         <div class="mt-1 w-full">
-          <quill-editor
-            #createQuillEditor
-            (onFocus)="activeQuillTarget = 'create'"
+          <editor
+            apiKey="d4j3xne2ooctby1b3c0xmbi0jq1ghgrf9pznbks3nbtda698"
             class="block w-full"
             style="width: 100%; display: block;"
-            [styles]="{ width: '100%' }"
-            [modules]="quillModules"
+            [init]="tinyMceInit"
             [ngModel]="content()"
             (ngModelChange)="content.set($event)"
-            [readOnly]="loading()"
-          ></quill-editor>
+            [disabled]="loading()"
+          ></editor>
         </div>
 
-        @if (uploadingQuillImage()) {
+        @if (uploadingEditorImage()) {
           <div class="mt-2">
             <div class="flex items-center justify-between text-[11px] text-slate-600">
               <span>Uploading image…</span>
-              <span>{{ quillImageUploadProgress() }}%</span>
+              <span>{{ editorImageUploadProgress() }}%</span>
             </div>
             <div class="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
               <div
                 class="h-full rounded-full bg-slate-900 transition-[width]"
-                [style.width.%]="quillImageUploadProgress()"
+                [style.width.%]="editorImageUploadProgress()"
               ></div>
             </div>
           </div>
@@ -265,29 +263,27 @@
                     <div>
                       <label class="mb-1 block text-[11px] font-medium text-slate-600">content</label>
                       <div class="w-full">
-                        <quill-editor
-                          #editQuillEditor
-                          (onFocus)="activeQuillTarget = 'edit'"
+                        <editor
+                          apiKey="d4j3xne2ooctby1b3c0xmbi0jq1ghgrf9pznbks3nbtda698"
                           class="block w-full"
                           style="width: 100%; display: block;"
-                          [styles]="{ width: '100%' }"
-                          [modules]="quillModules"
+                          [init]="tinyMceInit"
                           [ngModel]="editContent()"
                           (ngModelChange)="editContent.set($event)"
-                          [readOnly]="loading()"
-                        ></quill-editor>
+                          [disabled]="loading()"
+                        ></editor>
                       </div>
 
-                      @if (uploadingQuillImage()) {
+                      @if (uploadingEditorImage()) {
                         <div class="mt-2">
                           <div class="flex items-center justify-between text-[11px] text-slate-600">
                             <span>Uploading image…</span>
-                            <span>{{ quillImageUploadProgress() }}%</span>
+                            <span>{{ editorImageUploadProgress() }}%</span>
                           </div>
                           <div class="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                             <div
                               class="h-full rounded-full bg-slate-900 transition-[width]"
-                              [style.width.%]="quillImageUploadProgress()"
+                              [style.width.%]="editorImageUploadProgress()"
                             ></div>
                           </div>
                         </div>
