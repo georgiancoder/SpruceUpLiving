@@ -60,10 +60,9 @@
               <span>• Published {{ d | date: 'mediumDate' }}</span>
             }
 
-            <!-- optional read time if your VM provides it -->
-<!--            @if ((p as any).readMinutes) {-->
-<!--              <span>• {{ (p as any).readMinutes }} min read</span>-->
-<!--            }-->
+            @if (p.readMinutes) {
+              <span>• {{ p.readMinutes }} min read</span>
+            }
           </div>
 
           <!-- optional actions placeholder (kept minimal) -->

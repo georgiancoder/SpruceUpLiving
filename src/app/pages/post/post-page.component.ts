@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { estimateReadingMinutesFromPost } from '../../utils/reading-time';
 
 type PostDoc = {
   title?: string;
@@ -22,6 +23,7 @@ type PostVM = {
   mainImgUrl?: string;
   categoryIds: string[];
   tags: string[];
+  readMinutes?: number | null;
 };
 
 @Component({
@@ -64,6 +66,13 @@ export class PostPageComponent implements OnInit {
       }
 
       const data = snap.data() as PostDoc;
+
+      const readMinutes = estimateReadingMinutesFromPost({
+        title: data.title ?? '',
+        description: data.description ?? '',
+        content: data.content ?? '',
+      });
+
       this.post.set({
         id: snap.id,
         title: (data.title ?? '').trim() || 'Untitled post',
@@ -73,6 +82,7 @@ export class PostPageComponent implements OnInit {
         mainImgUrl: data.main_img,
         categoryIds: Array.isArray(data.category_ids) ? data.category_ids : [],
         tags: Array.isArray(data.tags) ? data.tags : [],
+        readMinutes,
       });
     } catch (e: any) {
       this.post.set(null);
