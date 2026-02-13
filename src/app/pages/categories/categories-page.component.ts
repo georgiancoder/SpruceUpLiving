@@ -10,10 +10,6 @@ import {
   getDocs,
   orderBy,
   query as fsQuery,
-  limit,
-  startAfter,
-  type QueryDocumentSnapshot,
-  type DocumentData,
 } from 'firebase/firestore';
 import { CategoryItem } from '../../types/category.types';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -46,15 +42,14 @@ export class CategoriesPageComponent implements OnInit {
   readonly postsLoading = signal(false);
   readonly postsError = signal<string | null>(null);
 
-  // Firestore-backed (paged)
+  // Firestore-backed (full dataset; paged locally)
   readonly posts = signal<PostGridItem[]>([]);
-  private lastPostDoc: QueryDocumentSnapshot<DocumentData> | null = null;
-  private donePaging = false;
 
   readonly selectedCategoryNames = signal<string[]>([]);
   readonly categories = signal<CategoryItem[]>([]);
 
   private readonly pageSize = 10;
+  readonly page = signal(1);
 
   readonly filteredPosts = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -73,36 +68,29 @@ export class CategoriesPageComponent implements OnInit {
     });
   });
 
-  readonly hasMorePosts = computed(() => !this.donePaging && !this.postsLoading());
+  readonly visiblePosts = computed(() => {
+    const take = this.page() * this.pageSize;
+    return this.filteredPosts().slice(0, take);
+  });
 
-  private resetPaginationState() {
-    this.posts.set([]);
-    this.lastPostDoc = null;
-    this.donePaging = false;
+  readonly hasMorePosts = computed(() => this.visiblePosts().length < this.filteredPosts().length);
+
+  private resetLocalPagination() {
+    this.page.set(1);
   }
 
-  async fetchPostsPage() {
-    if (this.postsLoading() || this.donePaging) return;
+  async fetchAllPosts() {
+    if (this.postsLoading()) return;
 
     this.postsLoading.set(true);
     this.postsError.set(null);
 
     try {
       const postsCol = collection(this.db, 'posts');
-
-      const base = [orderBy('created_at', 'desc'), limit(this.pageSize)] as const;
-      const q = this.lastPostDoc
-        ? fsQuery(postsCol, ...base, startAfter(this.lastPostDoc))
-        : fsQuery(postsCol, ...base);
-
+      const q = fsQuery(postsCol, orderBy('created_at', 'desc'));
       const snap = await getDocs(q);
 
-      if (snap.empty) {
-        this.donePaging = true;
-        return;
-      }
-
-      const nextItems: PostGridItem[] = snap.docs.map((d) => {
+      const allItems: PostGridItem[] = snap.docs.map((d) => {
         const data = d.data() as any;
 
         const baseItem: any = {
@@ -120,10 +108,7 @@ export class CategoriesPageComponent implements OnInit {
         return baseItem as PostGridItem;
       });
 
-      this.posts.update((prev) => [...prev, ...nextItems]);
-      this.lastPostDoc = snap.docs[snap.docs.length - 1] ?? this.lastPostDoc;
-
-      if (snap.size < this.pageSize) this.donePaging = true;
+      this.posts.set(allItems);
     } catch (e: any) {
       this.postsError.set(e?.message ?? 'Failed to fetch posts.');
     } finally {
@@ -153,42 +138,37 @@ export class CategoriesPageComponent implements OnInit {
       })),
     );
 
-    this.resetPaginationState();
-    await this.fetchPostsPage();
+    this.resetLocalPagination();
+    await this.fetchAllPosts();
 
     // If /categories/:categoryId is present, preselect it
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
       const raw = (pm.get('categoryId')?.trim() ?? '');
       const categorySlugs = raw ? raw.split('_') : [];
 
+      this.resetLocalPagination();
+
       if (categorySlugs.length === 0) {
         this.selectedCategoryIds.set([]);
         this.setHeaderText(this.categories());
-        this.resetPaginationState();
-        void this.fetchPostsPage();
         return;
       }
 
       const categoryIds = this.categories().filter((c) => c.slug && categorySlugs.includes(c.slug));
       this.selectedCategoryIds.set(categoryIds.length ? [...categoryIds.map((c) => c.id)] : []);
       this.setHeaderText(categoryIds.length ? categoryIds : this.categories());
-      this.resetPaginationState();
-      void this.fetchPostsPage();
     });
   }
 
   onQueryChange(q: string) {
     this.query.set(q);
-    this.resetPaginationState();
-    void this.fetchPostsPage();
+    this.resetLocalPagination();
   }
 
   onSelectedIdsChange(ids: string[]) {
     this.selectedCategoryIds.set(ids);
     this.setHeaderText(this.categories().filter((c) => this.selectedCategoryIds().includes(c.id)));
-
-    this.resetPaginationState();
-    void this.fetchPostsPage();
+    this.resetLocalPagination();
 
     // Update URL to reflect current selection: /categories or /categories/:slug[_slug...]
     const slugs = this.categories()
@@ -210,11 +190,10 @@ export class CategoriesPageComponent implements OnInit {
     this.setHeaderText(this.categories());
 
     this.router.navigate(['/categories']);
-    this.resetPaginationState();
-    void this.fetchPostsPage();
+    this.resetLocalPagination();
   }
 
   loadMorePosts() {
-    void this.fetchPostsPage();
+    this.page.update((p) => p + 1);
   }
 }
