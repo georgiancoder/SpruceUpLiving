@@ -15,7 +15,7 @@ import { CategoryItem } from '../../types/category.types';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { estimateReadingMinutesFromPost } from '../../utils/reading-time';
-
+import { Subject, debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 @Component({
   selector: 'app-categories-page',
@@ -36,6 +36,8 @@ export class CategoriesPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly query = signal('');
+  private readonly queryInput$ = new Subject<string>();
+
   readonly selectedCategoryIds = signal<string[]>([]);
   readonly totalPosts = signal<number>(0);
 
@@ -126,7 +128,26 @@ export class CategoriesPageComponent implements OnInit {
     this.selectedCategoryNames.set(selectedCatNames.length ? selectedCatNames : cats.map((c) => c.title));
   }
 
+  private setHeaderTextForSelected() {
+    const ids = new Set(this.selectedCategoryIds());
+    const cats = ids.size === 0 ? this.categories() : this.categories().filter((c) => ids.has(c.id));
+    this.setHeaderText(cats);
+  }
+
   async ngOnInit() {
+    // Debounced search (local)
+    this.queryInput$
+      .pipe(
+        map((v) => (v ?? '').toString()),
+        debounceTime(200),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((v) => {
+        this.query.set(v);
+        this.resetLocalPagination();
+      });
+
     const cats = await fetchCategoriesOrderedByName(this.db);
     this.categories.set(
       cats.map((c) => ({
@@ -154,20 +175,22 @@ export class CategoriesPageComponent implements OnInit {
         return;
       }
 
-      const categoryIds = this.categories().filter((c) => c.slug && categorySlugs.includes(c.slug));
-      this.selectedCategoryIds.set(categoryIds.length ? [...categoryIds.map((c) => c.id)] : []);
-      this.setHeaderText(categoryIds.length ? categoryIds : this.categories());
+      const selectedCats = this.categories().filter((c) => c.slug && categorySlugs.includes(c.slug));
+      this.selectedCategoryIds.set(selectedCats.length ? [...selectedCats.map((c) => c.id)] : []);
+
+      // If param doesn't map, fall back to "all"
+      this.setHeaderText(selectedCats.length ? selectedCats : this.categories());
     });
   }
 
   onQueryChange(q: string) {
-    this.query.set(q);
-    this.resetLocalPagination();
+    // Debounce to avoid filtering/paging churn while user types
+    this.queryInput$.next(q);
   }
 
   onSelectedIdsChange(ids: string[]) {
     this.selectedCategoryIds.set(ids);
-    this.setHeaderText(this.categories().filter((c) => this.selectedCategoryIds().includes(c.id)));
+    this.setHeaderTextForSelected();
     this.resetLocalPagination();
 
     // Update URL to reflect current selection: /categories or /categories/:slug[_slug...]
