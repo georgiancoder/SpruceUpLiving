@@ -9,6 +9,8 @@ type LastReadPost = {
   readAt?: string | null;
 };
 
+type CategoryWithViews = CategoryItem & { views?: number };
+
 @Component({
   selector: 'app-categories-sidebar',
   standalone: true,
@@ -26,6 +28,17 @@ export class CategoriesSidebarComponent {
   readonly localQuery = signal('');
 
   readonly lastReadPost = signal<LastReadPost | null>(null);
+
+  readonly popularCategories = computed(() => {
+    const list = (this.categories ?? []) as CategoryWithViews[];
+    return [...list]
+      .sort((a, b) => {
+        const bv = typeof b.views === 'number' ? b.views : 0;
+        const av = typeof a.views === 'number' ? a.views : 0;
+        return bv - av;
+      })
+      .slice(0, 4).reverse();
+  });
 
   constructor() {
     this.loadLastReadPostFromStorage();
@@ -59,7 +72,7 @@ export class CategoriesSidebarComponent {
   readonly filteredCategories = computed(() => {
     const q = this.localQuery().trim().toLowerCase();
     if (!q) return this.categories;
-    return this.categories.filter(c => c.title.toLowerCase().includes(q));
+    return this.categories.filter((c) => c.title.toLowerCase().includes(q));
   });
 
   isSelected(id: string) {
@@ -71,6 +84,10 @@ export class CategoriesSidebarComponent {
     if (checked) next.add(id);
     else next.delete(id);
     this.selectedIdsChange.emit(Array.from(next));
+  }
+
+  selectOnly(id: string) {
+    this.selectedIdsChange.emit([id]);
   }
 
   onClear() {

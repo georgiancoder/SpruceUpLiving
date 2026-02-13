@@ -49,11 +49,13 @@
     </div>
 
     <!-- Sidebar -->
-    <app-categories-sidebar
-      [categories]="categories()"
-      [selectedIds]="selectedCategoryIds()"
-      (selectedIdsChange)="onSelectedIdsChange($event)"
-      (clear)="onClearFilters()"
-    ></app-categories-sidebar>
+    @if (categories().length) {
+      <app-categories-sidebar
+        [categories]="categories() "
+        [selectedIds]="selectedCategoryIds()"
+        (selectedIdsChange)="onSelectedIdsChange($event)"
+        (clear)="onClearFilters()"
+      ></app-categories-sidebar>
+    }
   </div>
 </div>

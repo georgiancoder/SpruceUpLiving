@@ -87,11 +87,29 @@ export class PostPageComponent implements OnInit {
 
       this.post.set(vm);
       this.saveLastReadPost(vm);
+
+      // Best-effort: increment views via Cloud Function (do not block UI)
+      void this.updateViewsViaCloudFunction(vm.id);
     } catch (e: any) {
       this.post.set(null);
       this.error.set(e?.message ?? 'Failed to load post.');
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private async updateViewsViaCloudFunction(postId: string) {
+    try {
+      await fetch(
+        'https://us-central1-spruceupliving-d48ba.cloudfunctions.net/updatePostAndCategoryViews',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId }),
+        },
+      );
+    } catch {
+      // ignore view update failures
     }
   }
 

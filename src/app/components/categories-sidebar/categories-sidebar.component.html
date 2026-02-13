@@ -40,11 +40,32 @@
 
   <!-- Tags cloud -->
   <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-amber-200/50 border border-amber-200/70 p-6">
-    <h3 class="text-lg font-bold text-slate-900 mb-5">Popular tags</h3>
+    <h3 class="text-lg font-bold text-slate-900 mb-5">Popular Categories</h3>
+
     <div class="flex flex-wrap gap-2">
-      <a href="#" class="px-3 py-1.5 text-xs font-semibold rounded-full bg-amber-100/90 text-amber-800 border border-amber-300/70 hover:bg-amber-200 hover:shadow-md transition-all">Kitchen (24)</a>
-      <a href="#" class="px-3 py-1.5 text-xs font-semibold rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300/70 hover:bg-emerald-200 hover:shadow-md transition-all">Cleaning (18)</a>
-      <!-- More tags... -->
+      @for (c of popularCategories(); track c.id) {
+        <button
+          type="button"
+          (click)="selectOnly(c.id)"
+          class="px-3 py-1.5 text-xs font-semibold rounded-full border shadow-sm hover:shadow-md transition-all"
+          [class.bg-amber-100]="!isSelected(c.id)"
+          [class.text-amber-800]="!isSelected(c.id)"
+          [class.border-amber-300]="!isSelected(c.id)"
+          [class.hover:bg-amber-200]="!isSelected(c.id)"
+          [class.bg-amber-600]="isSelected(c.id)"
+          [class.text-white]="isSelected(c.id)"
+          [class.border-amber-700]="isSelected(c.id)"
+        >
+          {{ c.title }}
+          @if (c.views !== undefined) {
+            <span class="opacity-80">({{ c.views }})</span>
+          } @else if (c.postCount !== undefined) {
+            <span class="opacity-80">({{ c.postCount }})</span>
+          }
+        </button>
+      } @empty {
+        <p class="text-sm text-slate-600">No categories yet.</p>
+      }
     </div>
   </div>
 
