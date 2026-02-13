@@ -2,16 +2,40 @@
   <!-- Recent posts -->
   <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-amber-200/50 border border-amber-200/70 p-6">
     <h3 class="text-lg font-bold text-slate-900 mb-5">Recently read</h3>
-    <div class="space-y-3">
-      <a href="#" class="group flex items-start gap-3 p-3 rounded-xl hover:bg-amber-50/80 transition-all -m-3">
-        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-200/70 to-blue-400/40 flex-shrink-0 shadow-md"></div>
-        <div class="min-w-0 flex-1">
-          <p class="text-xs uppercase text-amber-700 font-semibold tracking-wide">Organization</p>
-          <p class="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:text-amber-900">Pantry Organization That Survives a Family of 5</p>
-        </div>
-      </a>
-      <!-- 3 more recent posts... -->
-    </div>
+
+    @if (lastReadPost(); as lr) {
+      <div class="space-y-3">
+        <a
+          class="group flex items-start gap-3 p-3 rounded-xl hover:bg-amber-50/80 transition-all -m-3"
+          [routerLink]="['/post', lr.id]"
+        >
+          <div class="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-blue-200/70 to-blue-400/40 flex-shrink-0 shadow-md">
+            @if (lr.mainImgUrl) {
+              <img
+                [src]="lr.mainImgUrl"
+                [alt]="lr.title"
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+            }
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <p class="text-xs uppercase text-amber-700 font-semibold tracking-wide">Recently read</p>
+            <p class="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:text-amber-900">
+              {{ lr.title }}
+            </p>
+            @if (getLastReadLabel(lr.readAt)) {
+              <p class="text-xs text-slate-500 mt-1">
+                {{ getLastReadLabel(lr.readAt) }}
+              </p>
+            }
+          </div>
+        </a>
+      </div>
+    } @else {
+      <p class="text-sm text-slate-600">No recently read post yet.</p>
+    }
   </div>
 
   <!-- Tags cloud -->

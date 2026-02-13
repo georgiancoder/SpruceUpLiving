@@ -81,7 +81,7 @@ export class AdminPostsPageComponent implements OnInit {
     menubar: false,
     branding: false,
     plugins: 'lists link image code autoresize',
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | link image | removeformat',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignment | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | link image | code | removeformat',
     content_style: 'img{max-width:100%;height:auto;}',
     images_upload_handler: async (blobInfo: any) => {
       const file: File = blobInfo.blob();

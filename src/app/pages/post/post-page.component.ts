@@ -73,7 +73,7 @@ export class PostPageComponent implements OnInit {
         content: data.content ?? '',
       });
 
-      this.post.set({
+      const vm: PostVM = {
         id: snap.id,
         title: (data.title ?? '').trim() || 'Untitled post',
         description: (data.description ?? '').trim(),
@@ -83,12 +83,30 @@ export class PostPageComponent implements OnInit {
         categoryIds: Array.isArray(data.category_ids) ? data.category_ids : [],
         tags: Array.isArray(data.tags) ? data.tags : [],
         readMinutes,
-      });
+      };
+
+      this.post.set(vm);
+      this.saveLastReadPost(vm);
     } catch (e: any) {
       this.post.set(null);
       this.error.set(e?.message ?? 'Failed to load post.');
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private saveLastReadPost(post: PostVM) {
+    try {
+      const payload = {
+        id: post.id,
+        title: post.title,
+        mainImgUrl: post.mainImgUrl ?? null,
+        readAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem('spruce:lastReadPost', JSON.stringify(payload));
+    } catch {
+      // ignore localStorage failures
     }
   }
 
