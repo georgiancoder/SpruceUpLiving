@@ -4,6 +4,8 @@
     subtitle="Browse all categories."
     actionText="Back home"
     actionLink="/"
+    [query]="query()"
+    (queryChange)="onQueryChange($event)"
   />
 
   <app-category-filters
