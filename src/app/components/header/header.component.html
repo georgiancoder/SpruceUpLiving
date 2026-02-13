@@ -58,43 +58,6 @@
         </ng-template>
       </ng-container>
 
-      <!-- Categories Dropdown (Tailwind-only: hover + focus) -->
-      <div class="relative group">
-
-        <!-- hover-bridge to prevent flicker -->
-        <div class="absolute left-0 top-full h-3 w-56"></div>
-
-        <div
-          id="categories-dropdown"
-          class="absolute top-full left-0 mt-2 w-56 bg-white/95 backdrop-blur-md py-2 px-2 rounded-2xl shadow-2xl shadow-black/10 border border-white/50
-                 opacity-0 invisible scale-95 transition-all duration-200 origin-top
-                 group-hover:opacity-100 group-hover:visible group-hover:scale-100
-                 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:scale-100"
-          role="menu"
-          aria-labelledby="categories-toggle"
-        >
-          <!-- dynamic categories & subcategories -->
-          <ng-container *ngFor="let cat of categories()">
-            <a [href]="cat.href" role="menuitem"
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-800 hover:bg-amber-50/80 transition-colors duration-200">
-              {{ cat.label }}
-              <span *ngIf="cat.subcategories?.length" class="text-xs text-amber-600 font-medium">
-                {{ cat.subcategories.length }} topics
-              </span>
-            </a>
-
-            <ng-container *ngIf="cat.subcategories?.length">
-              <div class="px-3 pb-2">
-                <a *ngFor="let sub of cat.subcategories"
-                   [href]="sub.href"
-                   class="block px-3 py-2 rounded-xl text-sm text-slate-700 hover:bg-amber-50/80 transition-colors">
-                  {{ sub.label }}
-                </a>
-              </div>
-            </ng-container>
-          </ng-container>
-        </div>
-      </div>
 
       <a href="#" class="px-4 py-1.5 rounded-full border border-amber-300/50 bg-gradient-to-r from-amber-100/80 to-amber-200/80 text-amber-800 text-xs font-semibold shadow-sm shadow-amber-200/50 hover:shadow-md hover:shadow-amber-300/60 hover:bg-amber-200/90 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
         Work with me
