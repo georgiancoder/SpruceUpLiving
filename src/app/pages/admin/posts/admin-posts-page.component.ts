@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import {Component, OnInit, signal, computed} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
@@ -12,15 +12,17 @@ import {
   writeBatch,
   updateDoc,
 } from 'firebase/firestore';
-import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
-import { fetchCategoriesOrderedByName, type Category } from '../../../services/categories.firestore';
+import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes, uploadBytesResumable } from 'firebase/storage';
+import { FormsModule } from '@angular/forms';
+import { EditorModule } from '@tinymce/tinymce-angular';
+import { fetchCategoriesOrderedByName } from '../../../services/categories.firestore';
 import { fetchPostsOrderedByCreatedAtDesc, type AdminPost } from '../../../services/posts.firestore';
 import {CategoryItem} from '../../../types/category.types';
 
 @Component({
   selector: 'app-admin-posts-page',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, EditorModule, FormsModule],
   templateUrl: 'admin-posts.component.html'
 })
 export class AdminPostsPageComponent implements OnInit {
@@ -30,6 +32,10 @@ export class AdminPostsPageComponent implements OnInit {
   readonly posts = signal<AdminPost[]>([]);
   readonly loading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // editor image upload progress state (used by TinyMCE `images_upload_handler`)
+  readonly uploadingEditorImage = signal<boolean>(false);
+  readonly editorImageUploadProgress = signal<number>(0);
 
   // form state (matches provided JSON)
   readonly title = signal<string>('');
@@ -67,6 +73,21 @@ export class AdminPostsPageComponent implements OnInit {
   readonly editSelectedTags = signal<string[]>([]);
   readonly editMainImgFile = signal<File | null>(null);
   readonly editMainImgPreviewUrl = signal<string | null>(null);
+
+  // TinyMCE editor config (shared between create/edit)
+  readonly tinyMceInit: Record<string, any> = {
+    apiKey: 'd4j3xne2ooctby1b3c0xmbi0jq1ghgrf9pznbks3nbtda698',
+    height: 360,
+    menubar: false,
+    branding: false,
+    plugins: 'lists link image code autoresize',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignment | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | link image | code | removeformat',
+    content_style: 'img{max-width:100%;height:auto;}',
+    images_upload_handler: async (blobInfo: any) => {
+      const file: File = blobInfo.blob();
+      return await this.uploadEditorImage(file);
+    },
+  };
 
   readonly canAddPost = computed(() => {
     return (
@@ -222,7 +243,7 @@ export class AdminPostsPageComponent implements OnInit {
     this.error.set(null);
 
     try {
-      // read before delete so we know which counters to decrement + which image to delete
+      // read before delete so we know which counters to decrement + which images to delete
       const postRef = doc(this.db, 'posts', id);
       const snap = await getDoc(postRef);
       const data: any = snap.exists() ? snap.data() : null;
@@ -232,15 +253,26 @@ export class AdminPostsPageComponent implements OnInit {
       ).filter(Boolean);
 
       const mainImgPath = data?.main_img_path ? String(data.main_img_path) : '';
+      const contentHtml: string = data?.content ? String(data.content) : '';
 
-      // best-effort: delete storage object first (if we have a path)
+      // delete main image (best-effort)
       if (mainImgPath) {
         try {
           await deleteObject(ref(this.storage, mainImgPath));
         } catch (e: any) {
-          // continue deleting the post doc; just show a warning
-          this.error.set(e?.message ?? 'Failed to delete post image from storage (post will still be deleted)');
+          this.error.set(e?.message ?? 'Failed to delete post main image from storage (post will still be deleted)');
         }
+      }
+
+      // delete embedded editor images (best-effort)
+      const imgSrcs = this.extractImageSrcsFromHtml(contentHtml);
+      const contentPaths = imgSrcs
+        .map((src) => this.storagePathFromFirebaseDownloadUrl(src))
+        .filter((p): p is string => !!p);
+
+      const imgDeleteRes = await this.deleteStorageObjectsBestEffort(contentPaths);
+      if (imgDeleteRes.failed > 0) {
+        this.error.set(`Post will be deleted, but ${imgDeleteRes.failed} embedded image(s) could not be deleted from Storage.`);
       }
 
       await deleteDoc(postRef);
@@ -250,12 +282,11 @@ export class AdminPostsPageComponent implements OnInit {
         if (categoryIds.length) {
           const batch = writeBatch(this.db);
           for (const cid of categoryIds) {
-            const ref = doc(this.db, 'categories', cid as string);
-            batch.set(ref, { postCount: increment(-1) }, { merge: true });
-            batch.update(ref, {});
+            const cRef = doc(this.db, 'categories', cid as string);
+            batch.set(cRef, { postCount: increment(-1) }, { merge: true });
+            batch.update(cRef, {});
           }
           await batch.commit();
-          this.loading.set(false);
           void this.fetchCategories();
         }
       } catch (e: any) {
@@ -384,6 +415,30 @@ export class AdminPostsPageComponent implements OnInit {
       if (!snap.exists()) throw new Error('Post not found');
 
       const prevData: any = snap.data();
+
+      // --- NEW: check removed embedded images on content update (best-effort delete) ---
+      const prevContentHtml: string = prevData?.content ? String(prevData.content) : '';
+      const nextContentHtml: string = content;
+
+      if (prevContentHtml && nextContentHtml && prevContentHtml !== nextContentHtml) {
+        const prevSrcs = new Set(this.extractImageSrcsFromHtml(prevContentHtml));
+        const nextSrcs = new Set(this.extractImageSrcsFromHtml(nextContentHtml));
+
+        const removedSrcs = Array.from(prevSrcs).filter((src) => !nextSrcs.has(src));
+        const removedPaths = removedSrcs
+          .map((src) => this.storagePathFromFirebaseDownloadUrl(src))
+          .filter((p): p is string => !!p);
+
+        // Only delete from Storage if the URL is a Firebase Storage download URL
+        // (so external images are untouched)
+        if (removedPaths.length) {
+          const res = await this.deleteStorageObjectsBestEffort(removedPaths);
+          if (res.failed > 0) {
+            this.error.set(`Post updated, but ${res.failed} removed embedded image(s) could not be deleted from Storage.`);
+          }
+        }
+      }
+
       const prevCategoryIds = Array.isArray(prevData?.category_ids) ? prevData.category_ids.map(String) : [];
       const nextCategoryIds = Array.from(new Set(this.editSelectedCategoryIds().map(String))).filter(Boolean);
       const { toAdd, toRemove } = this.setDelta(prevCategoryIds, nextCategoryIds);
@@ -459,5 +514,133 @@ export class AdminPostsPageComponent implements OnInit {
 
   protected onTagsChange(s: string) {
     this.editSelectedTags.set(s.split(',').map((s: string) => s.trim()).filter(Boolean))
+  }
+
+  private async uploadEditorImage(file: File): Promise<string> {
+    this.uploadingEditorImage.set(true);
+    this.editorImageUploadProgress.set(0);
+    this.error.set(null);
+
+    try {
+      const safeName = (file.name || 'image').replace(/[^\w.\-]+/g, '_');
+      const path = `post-content-images/${Date.now()}_${crypto.randomUUID()}_${safeName}`;
+      const storageRef = ref(this.storage, path);
+
+      const task = uploadBytesResumable(storageRef, file, { contentType: file.type || undefined });
+
+      await new Promise<void>((resolve, reject) => {
+        task.on(
+          'state_changed',
+          (snap) => {
+            const total = snap.totalBytes || 0;
+            const done = snap.bytesTransferred || 0;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            this.editorImageUploadProgress.set(pct);
+          },
+          (err) => reject(err),
+          () => resolve()
+        );
+      });
+
+      return await getDownloadURL(storageRef);
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to upload image');
+      throw e;
+    } finally {
+      this.uploadingEditorImage.set(false);
+      this.editorImageUploadProgress.set(0);
+    }
+  }
+
+  private extractImageSrcsFromHtml(html: string): string[] {
+    if (!html?.trim()) return [];
+    try {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      return Array.from(doc.querySelectorAll('img'))
+        .map((img) => img.getAttribute('src') || '')
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  private storagePathFromFirebaseDownloadUrl(url: string): string | null {
+    // Handles URLs like:
+    // https://firebasestorage.googleapis.com/v0/b/<bucket>/o/post-content-images%2F...?...token=...
+    try {
+      const u = new URL(url);
+      if (!u.hostname.includes('firebasestorage.googleapis.com')) return null;
+      const parts = u.pathname.split('/o/');
+      if (parts.length < 2) return null;
+
+      // Strip any extra path segments after the encoded object path
+      const encoded = parts[1].split('/')[0];
+      return decodeURIComponent(encoded);
+    } catch {
+      return null;
+    }
+  }
+
+  private async deleteStorageObjectsBestEffort(paths: string[]): Promise<{ deleted: number; failed: number }> {
+    const unique = Array.from(new Set(paths.filter(Boolean)));
+    let deleted = 0;
+    let failed = 0;
+
+    await Promise.all(
+      unique.map(async (p) => {
+        try {
+          await deleteObject(ref(this.storage, p));
+          deleted += 1;
+        } catch {
+          failed += 1;
+        }
+      })
+    );
+
+    return { deleted, failed };
+  }
+
+  async deletePost(postId: string) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      const postRef = doc(this.db, 'posts', postId);
+      const snap = await getDoc(postRef);
+      const data = snap.exists() ? (snap.data() as any) : null;
+
+      const mainImgPath: string | null = data?.main_img_path ?? null;
+      const contentHtml: string = data?.content ?? '';
+
+      // delete main image (same behavior as before)
+      if (mainImgPath) {
+        try {
+          await deleteObject(ref(this.storage, mainImgPath));
+        } catch {
+          // best-effort
+        }
+      }
+
+      // delete editor-inserted content images
+      const imgSrcs = this.extractImageSrcsFromHtml(contentHtml);
+      const contentPaths = imgSrcs
+        .map((src) => this.storagePathFromFirebaseDownloadUrl(src))
+        .filter((p): p is string => !!p);
+
+      const res = await this.deleteStorageObjectsBestEffort(contentPaths);
+
+      // finally delete doc
+      await deleteDoc(postRef);
+
+      if (res.failed > 0) {
+        this.error.set(`Post deleted, but ${res.failed} embedded image(s) could not be deleted from Storage.`);
+      }
+
+      await this.fetchPosts();
+    } catch (e: any) {
+      this.error.set(e?.message ?? 'Failed to delete post');
+    } finally {
+      this.loading.set(false);
+    }
   }
 }

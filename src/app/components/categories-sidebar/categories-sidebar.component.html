@@ -2,25 +2,70 @@
   <!-- Recent posts -->
   <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-amber-200/50 border border-amber-200/70 p-6">
     <h3 class="text-lg font-bold text-slate-900 mb-5">Recently read</h3>
-    <div class="space-y-3">
-      <a href="#" class="group flex items-start gap-3 p-3 rounded-xl hover:bg-amber-50/80 transition-all -m-3">
-        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-200/70 to-blue-400/40 flex-shrink-0 shadow-md"></div>
-        <div class="min-w-0 flex-1">
-          <p class="text-xs uppercase text-amber-700 font-semibold tracking-wide">Organization</p>
-          <p class="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:text-amber-900">Pantry Organization That Survives a Family of 5</p>
-        </div>
-      </a>
-      <!-- 3 more recent posts... -->
-    </div>
+
+    @if (lastReadPost(); as lr) {
+      <div class="space-y-3">
+        <a
+          class="group flex items-start gap-3 p-3 rounded-xl hover:bg-amber-50/80 transition-all -m-3"
+          [routerLink]="['/post', lr.id]"
+        >
+          <div class="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-blue-200/70 to-blue-400/40 flex-shrink-0 shadow-md">
+            @if (lr.mainImgUrl) {
+              <img
+                [src]="lr.mainImgUrl"
+                [alt]="lr.title"
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+            }
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <p class="text-xs uppercase text-amber-700 font-semibold tracking-wide">Recently read</p>
+            <p class="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:text-amber-900">
+              {{ lr.title }}
+            </p>
+            @if (getLastReadLabel(lr.readAt)) {
+              <p class="text-xs text-slate-500 mt-1">
+                {{ getLastReadLabel(lr.readAt) }}
+              </p>
+            }
+          </div>
+        </a>
+      </div>
+    } @else {
+      <p class="text-sm text-slate-600">No recently read post yet.</p>
+    }
   </div>
 
   <!-- Tags cloud -->
   <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg shadow-amber-200/50 border border-amber-200/70 p-6">
-    <h3 class="text-lg font-bold text-slate-900 mb-5">Popular tags</h3>
+    <h3 class="text-lg font-bold text-slate-900 mb-5">Popular Categories</h3>
+
     <div class="flex flex-wrap gap-2">
-      <a href="#" class="px-3 py-1.5 text-xs font-semibold rounded-full bg-amber-100/90 text-amber-800 border border-amber-300/70 hover:bg-amber-200 hover:shadow-md transition-all">Kitchen (24)</a>
-      <a href="#" class="px-3 py-1.5 text-xs font-semibold rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300/70 hover:bg-emerald-200 hover:shadow-md transition-all">Cleaning (18)</a>
-      <!-- More tags... -->
+      @for (c of popularCategories(); track c.id) {
+        <button
+          type="button"
+          (click)="selectOnly(c.id)"
+          class="px-3 py-1.5 text-xs font-semibold rounded-full border shadow-sm hover:shadow-md transition-all"
+          [class.bg-amber-100]="!isSelected(c.id)"
+          [class.text-amber-800]="!isSelected(c.id)"
+          [class.border-amber-300]="!isSelected(c.id)"
+          [class.hover:bg-amber-200]="!isSelected(c.id)"
+          [class.bg-amber-600]="isSelected(c.id)"
+          [class.text-white]="isSelected(c.id)"
+          [class.border-amber-700]="isSelected(c.id)"
+        >
+          {{ c.title }}
+          @if (c.views !== undefined) {
+            <span class="opacity-80">({{ c.views }})</span>
+          } @else if (c.postCount !== undefined) {
+            <span class="opacity-80">({{ c.postCount }})</span>
+          }
+        </button>
+      } @empty {
+        <p class="text-sm text-slate-600">No categories yet.</p>
+      }
     </div>
   </div>
 

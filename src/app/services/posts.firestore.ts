@@ -75,7 +75,7 @@ export async function fetchLatestPostsOrderedByCreatedAtDesc(
 
       const categoryIds = Array.isArray(data?.category_ids) ? data.category_ids.map(String) : [];
 
-      return { main_img, title, excerpt, href, dateLabel, tag, category_ids: categoryIds } as LatestPost;
+      return { id: d.id, main_img, title, excerpt, href, dateLabel, tag, category_ids: categoryIds } as LatestPost;
     })
     .filter((x): x is LatestPost => !!x);
 

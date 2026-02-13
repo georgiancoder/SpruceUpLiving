@@ -147,7 +147,7 @@ export class HomePageComponent implements OnInit {
       const enriched = posts.map((p: any) => {
         const ids = Array.isArray(p?.category_ids) ? p.category_ids.map(String) : [];
         const categories = ids.map((id: string) => byId[id]).filter(Boolean).map((c: { title: any; }) => c.title);
-        return { ...(p as LatestPost), category_ids: ids, categories } as PostWithCategories;
+        return { ...(p as LatestPost), category_ids: ids, categories, id: p.id } as PostWithCategories;
       });
 
       this.latestPosts.set(enriched);
