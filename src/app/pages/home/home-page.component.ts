@@ -108,7 +108,7 @@ export class HomePageComponent implements OnInit {
 
           // Default CTA points to post detail; allow override
           const slug = (post?.slug ?? '').toString().trim();
-          const defaultHref = slug ? `/posts/${slug}` : `/posts/${id}`;
+          const defaultHref = slug ? `/#/post/${slug}` : `/#/post/${id}`;
           const ctaHref = (o?.ctaHref ?? defaultHref).toString().trim();
           const ctaLabel = (o?.ctaLabel ?? 'Read more').toString().trim();
           const tags = Array.isArray(post?.tags) ? post.tags.map((t: any) => String(t).trim()).filter(Boolean) : [];
@@ -187,7 +187,11 @@ export class HomePageComponent implements OnInit {
           byId[d.id] = item;
           return item;
         })
-        .filter((x): x is CategoryItem => !!x) as CategoryItem[];
+        .filter((x): x is CategoryItem => !!x).sort((a, b) => {
+          const bv = typeof b.views === 'number' ? b.views : 0;
+          const av = typeof a.views === 'number' ? a.views : 0;
+          return bv - av;
+        }).reverse() as CategoryItem[];
 
       this._categoriesById.set(byId);
       this._categoryItems.set(mapped);
