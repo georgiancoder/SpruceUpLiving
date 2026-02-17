@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { estimateReadingMinutesFromPost } from '../../utils/reading-time';
+import { SuggestedPostsComponent } from '../../components/suggested-posts/suggested-posts.component';
 
 type PostDoc = {
   title?: string;
@@ -29,7 +30,7 @@ type PostVM = {
 @Component({
   selector: 'app-post-page',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, SuggestedPostsComponent],
   templateUrl: './post-page.component.html',
   styleUrl: './post-page.component.css',
 })
