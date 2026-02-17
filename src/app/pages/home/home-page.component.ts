@@ -10,7 +10,7 @@ import {
 import { NewsletterSignupComponent } from '../../components/newsletter-signup/newsletter-signup.component';
 import { AboutSectionComponent } from '../../components/about-section/about-section.component';
 import {ContactSectionComponent} from '../../components/contact-section/contact-section.component';
-import {collection, getDocs, getFirestore, orderBy, query, doc, getDoc, documentId, where} from 'firebase/firestore';
+import {collection, getDocs, getFirestore, orderBy, query, doc, getDoc} from 'firebase/firestore';
 import type { CategoryDoc, CategoryItem } from '../../types/category.types';
 import { fetchLatestPostsOrderedByCreatedAtDesc } from '../../services/posts.firestore';
 import {
@@ -65,53 +65,36 @@ export class HomePageComponent implements OnInit {
 
   private async fetchMainSlider() {
     try {
-      const ref = doc(this.db, 'settings', 'mainSlider');
-      const snap = await getDoc(ref);
+      // Fetch top 3 most popular posts by views
+      const qPopular = query(
+        collection(this.db, 'posts'),
+        orderBy('views', 'desc'),
+      );
 
-      const data = snap.exists() ? (snap.data() as any) : null;
+      const snap = await getDocs(qPopular);
 
-      const postIds: string[] = Array.isArray(data?.postIds)
-        ? data.postIds.map((x: any) => String(x)).filter(Boolean)
-        : [];
+      const top3 = snap.docs.slice(0, 3).map((d) => ({ id: d.id, ...d.data() }));
 
-      // Optional per-slide overrides (array aligned to postIds by index)
-      const overrides: any[] = Array.isArray(data?.slides) ? data.slides : [];
+      const slides: HeroSlide[] = top3
+        .map((post: any) => {
+          const id = String(post.id);
+          const title = (post?.title ?? '').toString().trim();
+          const subtitle = (post?.description ?? '').toString().trim();
 
-      if (!postIds.length) {
-        this.heroSlides.set([]);
-        return;
-      }
-      // Fetch posts by IDs (Firestore "in" supports max 10 per query); chunk to be safe
-      const postsById = new Map<string, any>();
-      const chunkSize = 10;
+          const category_ids = Array.isArray(post.category_ids) ? post.category_ids : (post.category_ids ? [post.category_ids] : []);
+          const categories = category_ids
+            .map((cid: any) => String(cid))
+            .map((cid: string) => this._categoryItems().find((c) => c.id === cid)?.title)
+            .filter(Boolean) as string[];
 
-      for (let i = 0; i < postIds.length; i += chunkSize) {
-        const chunk = postIds.slice(i, i + chunkSize);
-        const q = query(collection(this.db, 'posts'), where(documentId(), 'in', chunk));
-        const s = await getDocs(q);
-        s.forEach((d) => postsById.set(d.id, { id: d.id, ...d.data() }));
-      }
+          const imageUrl = (post?.main_img ?? '').toString().trim();
 
-      const slides: HeroSlide[] = postIds
-        .map((id, idx) => {
-          const post = postsById.get(id);
-          if (!post) return null;
-          const o = overrides[idx] ?? {};
-          const title = (o?.title ?? post?.title ?? '').toString().trim();
-          const subtitle = (o?.subtitle ?? post?.description ?? '').toString().trim();
-          const category_ids = Array.isArray(post.category_ids) ? post.category_ids : [post.category_ids];
-          const categories = category_ids.map((id:string) => this._categoryItems().find(c => c.id === id)?.title);
-          // try common image fields; allow override
-          const imageUrl = (o?.imageUrl ?? post?.main_img ?? '')
-            .toString()
-            .trim();
-
-          // Default CTA points to post detail; allow override
           const slug = (post?.slug ?? '').toString().trim();
           const defaultHref = slug ? `/#/post/${slug}` : `/#/post/${id}`;
-          const ctaHref = (o?.ctaHref ?? defaultHref).toString().trim();
-          const ctaLabel = (o?.ctaLabel ?? 'Read more').toString().trim();
-          const tags = Array.isArray(post?.tags) ? post.tags.map((t: any) => String(t).trim()).filter(Boolean) : [];
+
+          const tags = Array.isArray(post?.tags)
+            ? post.tags.map((t: any) => String(t).trim()).filter(Boolean)
+            : [];
 
           if (!title || !imageUrl) return null;
 
@@ -120,13 +103,12 @@ export class HomePageComponent implements OnInit {
           return {
             title,
             subtitle,
-            ctaLabel,
-            ctaHref,
+            ctaLabel: 'Read more',
+            ctaHref: defaultHref,
             imageUrl,
             tags,
             categories,
             postId: id,
-            // extra display data for UI (optional)
             readMinutes,
           } as any as HeroSlide;
         })
