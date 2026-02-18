@@ -1,0 +1,41 @@
+<div class="flex items-center justify-between mb-8">
+  <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">You might also like</h2>
+</div>
+
+@if (loading()) {
+  <div class="text-sm text-slate-600">Loading suggestions…</div>
+} @else if (error()) {
+  <div class="text-sm text-rose-700">{{ error() }}</div>
+} @else if (!hasAny()) {
+  <div class="text-sm text-slate-600">No suggestions yet.</div>
+} @else {
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+    @for (p of posts(); track p.id) {
+      <a
+        class="group bg-white/95 rounded-2xl shadow-lg hover:shadow-xl hover:shadow-amber-200/50 transition-all overflow-hidden"
+        [routerLink]="['/post', p.id]"
+      >
+        @if (p.mainImgUrl) {
+          <img class="h-48 w-full object-cover" [src]="p.mainImgUrl" [alt]="p.title" loading="lazy" />
+        } @else {
+          <div class="h-48 w-full bg-gradient-to-br from-emerald-200/60 to-emerald-400/40"></div>
+        }
+
+        <div class="p-6">
+          <h3 class="text-lg font-bold text-slate-900 leading-tight group-hover:text-amber-900 mb-2 line-clamp-2">
+            {{ p.title }}
+          </h3>
+          @if (p.description) {
+            <p class="text-sm text-slate-600 line-clamp-2">{{ p.description }}</p>
+          }
+          <div class="mt-4 flex items-center justify-end text-xs text-slate-600">
+            <span class="px-3 py-1 bg-white/70 rounded-full text-amber-700 border border-amber-200/60 group-hover:bg-amber-50 transition-colors">
+              Read →
+            </span>
+          </div>
+        </div>
+      </a>
+    }
+  </div>
+}
+

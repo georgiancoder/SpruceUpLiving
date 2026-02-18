@@ -7,6 +7,7 @@ export type CategoryItem = {
   slug?: string;
   postCount?: number;
   countLabel?: string; // e.g. "articles"
+  views?: number;
 };
 
 export type CategoryDoc = {

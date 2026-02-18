@@ -14,56 +14,58 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-14">
       @for (post of visiblePosts; track post.href) {
         <article
-          class="group bg-white/80 rounded-3xl border border-amber-200/60 shadow-lg hover:shadow-2xl hover:shadow-amber-200/50 hover:-translate-y-2 transition-all duration-500 overflow-hidden backdrop-blur-sm hover:bg-white"
+          class="group bg-white/80 rounded-3xl border border-amber-200/60 shadow-lg hover:shadow-2xl hover:shadow-amber-200/50 hover:-translate-y-2 transition-all duration-500 overflow-hidden backdrop-blur-sm hover:bg-white pb-1"
         >
-          @if (post.main_img) {
-            <img
-              class="h-40 w-full object-cover"
-              [src]="post.main_img"
-              [alt]="post.title"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-            />
-          } @else {
-            <div class="h-40 bg-gradient-to-br from-amber-200/70 to-amber-400/50 shadow-inner"></div>
-          }
-
-          <div class="p-6 pb-8 flex flex-col h-full">
-            <p class="text-sm text-slate-600 uppercase tracking-wide font-medium mb-2">
-              @if (post.categories) {
-                <span>{{ post.categories.join(', ') }}</span>
-              }
-              @if (post.dateLabel) {
-                <span>
-                  •
-                  {{ post.dateLabel | date:'MMM yyyy' }}
-                </span>
-              }
-            </p>
-
-            <h3
-              class="text-xl font-bold text-slate-900 leading-tight group-hover:text-amber-900 transition-colors mb-3 line-clamp-2"
-            >
-              <a [href]="'#/post/' + post.id" class="hover:underline underline-offset-2">
-                {{ post.title }}
-              </a>
-            </h3>
-
-            @if (post.excerpt) {
-              <p class="text-slate-700 leading-relaxed flex-1 mb-4 line-clamp-3">
-                {{ post.excerpt }}
-              </p>
+          <div class="overflow-hidden">
+            @if (post.main_img) {
+              <img
+                class="h-40 w-full object-cover"
+                [src]="post.main_img"
+                [alt]="post.title"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+              />
             } @else {
-              <div class="flex-1"></div>
+              <div class="h-40 bg-gradient-to-br from-amber-200/70 to-amber-400/50 shadow-inner"></div>
             }
 
-            <div class="flex flex-wrap gap-2">
-              @if (post.tag) {
-                <span
-                  class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100/80 text-amber-800 border border-amber-300/60"
-                  >{{ post.tag }}</span
-                >
+            <div class="p-6 pb-8 flex flex-col h-full">
+              <p class="text-sm text-slate-600 uppercase tracking-wide font-medium mb-2">
+                @if (post.categories) {
+                  <span>{{ post.categories.join(', ') }}</span>
+                }
+                @if (post.dateLabel) {
+                  <span>
+                  •
+                    {{ post.dateLabel | date:'MMM yyyy' }}
+                </span>
+                }
+              </p>
+
+              <h3
+                class="text-xl font-bold text-slate-900 leading-tight group-hover:text-amber-900 transition-colors mb-3 line-clamp-2"
+              >
+                <a [href]="'#/post/' + post.id" class="hover:underline underline-offset-2">
+                  {{ post.title }}
+                </a>
+              </h3>
+
+              @if (post.excerpt) {
+                <p class="text-slate-700 leading-relaxed flex-1 mb-4 line-clamp-3">
+                  {{ post.excerpt }}
+                </p>
+              } @else {
+                <div class="flex-1"></div>
               }
+
+              <div class="flex flex-wrap gap-2">
+                @if (post.tag) {
+                  <span
+                    class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100/80 text-amber-800 border border-amber-300/60"
+                  >{{ post.tag }}</span
+                  >
+                }
+              </div>
             </div>
           </div>
         </article>
