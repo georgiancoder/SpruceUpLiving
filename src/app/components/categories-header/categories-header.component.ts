@@ -1,10 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-categories-header',
   standalone: true,
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './categories-header.component.html',
 })
 export class CategoriesHeaderComponent {
