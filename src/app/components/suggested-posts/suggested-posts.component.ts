@@ -66,7 +66,6 @@ export class SuggestedPostsComponent implements OnChanges {
         );
 
         const snap = await getDocs(q);
-        console.log(snap);
         const mapped = snap.docs
           .filter((d) => d.id !== currentId)
           .map((d) => {
