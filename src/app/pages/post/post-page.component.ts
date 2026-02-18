@@ -102,7 +102,7 @@ export class PostPageComponent implements OnInit {
   private async updateViewsViaCloudFunction(postId: string) {
     try {
       await fetch(
-        'https://us-central1-spruceupliving-d48ba.cloudfunctions.net/updatePostAndCategoryViews',
+        'https://updatepostandcategoryviews-mfofpvudma-uc.a.run.app',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
