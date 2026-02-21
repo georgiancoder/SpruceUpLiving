@@ -16,6 +16,7 @@ import { AdminSliderPageComponent } from './pages/admin/slider/admin-slider.comp
 import { CategoriesPageComponent } from './pages/categories/categories-page.component';
 import { PostPageComponent } from './pages/post/post-page.component';
 import { NotFoundPageComponent } from './pages/not-found/not-found-page.component';
+import { PrivacyPageComponent } from './pages/privacy/privacy-page.component';
 
 export const routes: Routes = [
   // Root shows login
@@ -27,6 +28,7 @@ export const routes: Routes = [
       { path: 'categories', component: CategoriesPageComponent },
       { path: 'categories/:categoryId', component: CategoriesPageComponent },
       { path: 'post/:postId', component: PostPageComponent },
+      { path: 'privacy', component: PrivacyPageComponent, title: 'Privacy Policy' },
     ]
   },
 

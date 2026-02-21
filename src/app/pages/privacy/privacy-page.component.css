@@ -1,0 +1,5 @@
+/* Keep styling minimal; site uses global Tailwind utility classes. */
+:host {
+  display: block;
+}
+
