@@ -36,3 +36,12 @@ export async function addNewsletterSubscriberEmail(input: AddNewsletterSubscribe
     pageUrl: input.pageUrl ?? null,
   });
 }
+
+export function normalizeNewsletterEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export function isValidNewsletterEmail(email: string): boolean {
+  const v = normalizeNewsletterEmail(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
