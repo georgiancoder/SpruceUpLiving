@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, Input, signal } from '@angular/core';
-import { addDoc, collection, getDocs, getFirestore, serverTimestamp } from 'firebase/firestore';
+import { addNewsletterSubscriberEmail, fetchExistingEmails } from '../../services/newsletter.firestore';
 
 @Component({
   selector: 'app-newsletter-signup',
@@ -23,25 +23,15 @@ export class NewsletterSignupComponent {
   protected readonly fetchError = signal<string | null>(null);
 
   constructor() {
-    void this.fetchExistingEmails();
+    void this.loadExistingEmails();
   }
 
-  private async fetchExistingEmails() {
+  private async loadExistingEmails() {
     this.loadingExisting.set(true);
     this.fetchError.set(null);
 
     try {
-      const db = getFirestore();
-      const colRef = collection(db, 'newsletterSubscribers');
-      const snap = await getDocs(colRef);
-
-      const set = new Set<string>();
-      snap.forEach(d => {
-        const e = (d.data() as any)?.email;
-        if (typeof e === 'string' && e.trim()) set.add(e.trim().toLowerCase());
-      });
-
-      this.existingEmails.set(set);
+      this.existingEmails.set(await fetchExistingEmails());
     } catch (e: any) {
       this.fetchError.set(e?.message ?? 'Failed to load subscribers.');
       this.existingEmails.set(new Set());
@@ -84,12 +74,8 @@ export class NewsletterSignupComponent {
     this.error.set(null);
 
     try {
-      const db = getFirestore();
-      const colRef = collection(db, 'newsletterSubscribers');
-
-      await addDoc(colRef, {
+      await addNewsletterSubscriberEmail({
         email: normalized,
-        createdAt: serverTimestamp(),
         source: 'newsletter-signup',
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
         pageUrl: typeof location !== 'undefined' ? location.href : null,
