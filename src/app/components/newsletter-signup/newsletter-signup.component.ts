@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, Input, signal } from '@angular/core';
+import { addDoc, collection, getFirestore, serverTimestamp } from 'firebase/firestore';
 
 @Component({
   selector: 'app-newsletter-signup',
@@ -15,6 +16,7 @@ export class NewsletterSignupComponent {
   protected readonly email = signal('');
   protected readonly status = signal<'idle' | 'success'>('idle');
   protected readonly error = signal<string | null>(null);
+  protected readonly sending = signal(false);
 
   protected onEmailInput(v: string) {
     this.email.set(v);
@@ -22,7 +24,9 @@ export class NewsletterSignupComponent {
     this.status.set('idle');
   }
 
-  protected submit() {
+  protected async submit() {
+    if (this.sending()) return;
+
     const value = this.email().trim();
 
     if (!value) {
@@ -30,15 +34,34 @@ export class NewsletterSignupComponent {
       return;
     }
 
-    // Basic email check (no backend here)
     const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     if (!ok) {
       this.error.set('Please enter a valid email.');
       return;
     }
 
-    // Placeholder "success" behavior
-    this.status.set('success');
+    this.sending.set(true);
     this.error.set(null);
+
+    try {
+      const db = getFirestore();
+      const colRef = collection(db, 'newsletterSubscribers');
+
+      await addDoc(colRef, {
+        email: value.toLowerCase(),
+        createdAt: serverTimestamp(),
+        source: 'newsletter-signup',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+        pageUrl: typeof location !== 'undefined' ? location.href : null,
+      });
+
+      this.status.set('success');
+      this.email.set('');
+    } catch (e: any) {
+      this.status.set('idle');
+      this.error.set(e?.message ?? 'Failed to subscribe. Please try again.');
+    } finally {
+      this.sending.set(false);
+    }
   }
 }
