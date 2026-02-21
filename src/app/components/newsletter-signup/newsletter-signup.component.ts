@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, Input, signal } from '@angular/core';
-import { addDoc, collection, getFirestore, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, getDocs, getFirestore, serverTimestamp } from 'firebase/firestore';
 
 @Component({
   selector: 'app-newsletter-signup',
@@ -17,6 +17,38 @@ export class NewsletterSignupComponent {
   protected readonly status = signal<'idle' | 'success'>('idle');
   protected readonly error = signal<string | null>(null);
   protected readonly sending = signal(false);
+
+  protected readonly existingEmails = signal<Set<string>>(new Set());
+  protected readonly loadingExisting = signal(false);
+  protected readonly fetchError = signal<string | null>(null);
+
+  constructor() {
+    void this.fetchExistingEmails();
+  }
+
+  private async fetchExistingEmails() {
+    this.loadingExisting.set(true);
+    this.fetchError.set(null);
+
+    try {
+      const db = getFirestore();
+      const colRef = collection(db, 'newsletterSubscribers');
+      const snap = await getDocs(colRef);
+
+      const set = new Set<string>();
+      snap.forEach(d => {
+        const e = (d.data() as any)?.email;
+        if (typeof e === 'string' && e.trim()) set.add(e.trim().toLowerCase());
+      });
+
+      this.existingEmails.set(set);
+    } catch (e: any) {
+      this.fetchError.set(e?.message ?? 'Failed to load subscribers.');
+      this.existingEmails.set(new Set());
+    } finally {
+      this.loadingExisting.set(false);
+    }
+  }
 
   protected onEmailInput(v: string) {
     this.email.set(v);
@@ -40,6 +72,14 @@ export class NewsletterSignupComponent {
       return;
     }
 
+    const normalized = value.toLowerCase();
+
+    if (this.existingEmails().has(normalized)) {
+      this.status.set('idle');
+      this.error.set('This email is already subscribed.');
+      return;
+    }
+
     this.sending.set(true);
     this.error.set(null);
 
@@ -48,11 +88,18 @@ export class NewsletterSignupComponent {
       const colRef = collection(db, 'newsletterSubscribers');
 
       await addDoc(colRef, {
-        email: value.toLowerCase(),
+        email: normalized,
         createdAt: serverTimestamp(),
         source: 'newsletter-signup',
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
         pageUrl: typeof location !== 'undefined' ? location.href : null,
+      });
+
+      // keep local cache in sync without refetch
+      this.existingEmails.update(prev => {
+        const next = new Set(prev);
+        next.add(normalized);
+        return next;
       });
 
       this.status.set('success');
