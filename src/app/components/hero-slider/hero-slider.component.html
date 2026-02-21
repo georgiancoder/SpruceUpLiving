@@ -79,7 +79,7 @@
         <!-- nav arrows (do NOT fade) -->
         <button
           type="button"
-          class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/70 border border-amber-300/60 text-amber-900 shadow-md hover:bg-white hover:shadow-lg transition"
+          class="absolute cursor-pointer left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/70 border border-amber-300/60 text-amber-900 shadow-md hover:bg-white hover:shadow-lg transition"
           (click)="prev()"
           aria-label="Previous slide"
         >
@@ -87,7 +87,7 @@
         </button>
         <button
           type="button"
-          class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/70 border border-amber-300/60 text-amber-900 shadow-md hover:bg-white hover:shadow-lg transition"
+          class="absolute cursor-pointer right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/70 border border-amber-300/60 text-amber-900 shadow-md hover:bg-white hover:shadow-lg transition"
           (click)="next()"
           aria-label="Next slide"
         >
@@ -131,9 +131,6 @@
           >
             {{ p.title }}
           </h3>
-          <p class="text-sm text-slate-600 mt-1" *ngIf="p.ctaLabel">
-            {{ p.ctaLabel }}
-          </p>
         </div>
 
         <!-- progress bar (only for active slide in sidebar) -->

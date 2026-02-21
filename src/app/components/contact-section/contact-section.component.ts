@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {ChangeDetectionStrategy, Component, Input, signal} from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 
 @Component({
@@ -23,16 +23,62 @@ export class ContactSectionComponent {
   sending = false;
   sent = false;
   errorMsg: string | null = null;
+  successMsg: string | null = null;
+
+  readonly fadingSuccess = signal<boolean>(false);
+  readonly fadingError = signal<boolean>(false);
+
+  private hideSuccessTimer: ReturnType<typeof setTimeout> | null = null;
+  private hideErrorTimer: ReturnType<typeof setTimeout> | null = null;
 
   private readonly endpoint =
     'https://sendemail-mfofpvudma-uc.a.run.app';
 
+  private clearMessageTimers() {
+    if (this.hideSuccessTimer) clearTimeout(this.hideSuccessTimer);
+    if (this.hideErrorTimer) clearTimeout(this.hideErrorTimer);
+    this.hideSuccessTimer = null;
+    this.hideErrorTimer = null;
+  }
+
+  private scheduleSuccessHide(totalMs = 3_000, fadeMs = 300) {
+    this.fadingSuccess.set(false);
+    if (this.hideSuccessTimer) clearTimeout(this.hideSuccessTimer);
+
+    this.hideSuccessTimer = setTimeout(() => {
+      this.fadingSuccess.set(true)
+      setTimeout(() => {
+        this.successMsg = null;
+        this.sent = false;
+        this.fadingSuccess.set(false);
+      }, fadeMs);
+    }, totalMs);
+  }
+
+  private scheduleErrorHide(totalMs = 3_000, fadeMs = 300) {
+    this.fadingError.set(false);
+    if (this.hideErrorTimer) clearTimeout(this.hideErrorTimer);
+
+    this.hideErrorTimer = setTimeout(() => {
+      this.fadingError.set(true);
+      setTimeout(() => {
+        this.errorMsg = null;
+        this.fadingError.set(false);
+      }, fadeMs);
+    }, totalMs);
+  }
+
   async onSubmit(form: NgForm) {
     if (!form.valid || this.sending) return;
+
+    this.clearMessageTimers();
+    this.fadingSuccess.set(false);
+    this.fadingError.set(false);
 
     this.sending = true;
     this.sent = false;
     this.errorMsg = null;
+    this.successMsg = null;
 
     const name = (form.value?.name ?? '').toString().trim();
     const from = (form.value?.from ?? '').toString().trim();
@@ -58,9 +104,12 @@ export class ContactSectionComponent {
       }
 
       this.sent = true;
+      this.successMsg = "Message sent. Thanks—I'll get back to you soon.";
+      this.scheduleSuccessHide(3_000, 300);
       form.resetForm();
     } catch (e) {
       this.errorMsg = e instanceof Error ? e.message : 'Failed to send message';
+      this.scheduleErrorHide(3_000, 300);
     } finally {
       this.sending = false;
     }

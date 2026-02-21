@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, Input, signal } from '@angular/core';
+import { addNewsletterSubscriberEmail, fetchExistingEmails } from '../../services/newsletter.firestore';
 
 @Component({
   selector: 'app-newsletter-signup',
@@ -15,6 +16,29 @@ export class NewsletterSignupComponent {
   protected readonly email = signal('');
   protected readonly status = signal<'idle' | 'success'>('idle');
   protected readonly error = signal<string | null>(null);
+  protected readonly sending = signal(false);
+
+  protected readonly existingEmails = signal<Set<string>>(new Set());
+  protected readonly loadingExisting = signal(false);
+  protected readonly fetchError = signal<string | null>(null);
+
+  constructor() {
+    void this.loadExistingEmails();
+  }
+
+  private async loadExistingEmails() {
+    this.loadingExisting.set(true);
+    this.fetchError.set(null);
+
+    try {
+      this.existingEmails.set(await fetchExistingEmails());
+    } catch (e: any) {
+      this.fetchError.set(e?.message ?? 'Failed to load subscribers.');
+      this.existingEmails.set(new Set());
+    } finally {
+      this.loadingExisting.set(false);
+    }
+  }
 
   protected onEmailInput(v: string) {
     this.email.set(v);
@@ -22,7 +46,9 @@ export class NewsletterSignupComponent {
     this.status.set('idle');
   }
 
-  protected submit() {
+  protected async submit() {
+    if (this.sending()) return;
+
     const value = this.email().trim();
 
     if (!value) {
@@ -30,15 +56,45 @@ export class NewsletterSignupComponent {
       return;
     }
 
-    // Basic email check (no backend here)
     const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     if (!ok) {
       this.error.set('Please enter a valid email.');
       return;
     }
 
-    // Placeholder "success" behavior
-    this.status.set('success');
+    const normalized = value.toLowerCase();
+
+    if (this.existingEmails().has(normalized)) {
+      this.status.set('idle');
+      this.error.set('This email is already subscribed.');
+      return;
+    }
+
+    this.sending.set(true);
     this.error.set(null);
+
+    try {
+      await addNewsletterSubscriberEmail({
+        email: normalized,
+        source: 'newsletter-signup',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+        pageUrl: typeof location !== 'undefined' ? location.href : null,
+      });
+
+      // keep local cache in sync without refetch
+      this.existingEmails.update(prev => {
+        const next = new Set(prev);
+        next.add(normalized);
+        return next;
+      });
+
+      this.status.set('success');
+      this.email.set('');
+    } catch (e: any) {
+      this.status.set('idle');
+      this.error.set(e?.message ?? 'Failed to subscribe. Please try again.');
+    } finally {
+      this.sending.set(false);
+    }
   }
 }

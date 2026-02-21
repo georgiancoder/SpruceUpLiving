@@ -1,16 +1,49 @@
-<section class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 mb-14">
+<section class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
   <div class="bg-gradient-to-r from-amber-100/90 via-amber-50 to-white/90 rounded-3xl p-8 lg:p-10 shadow-2xl shadow-amber-200/40 border border-amber-200/50 backdrop-blur-md">
     <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 lg:gap-8">
       <div>
         <h2 class="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">Make home feel easier, one email at a time</h2>
         <p class="text-lg text-slate-700 max-w-md">Get one practical home tip in your inbox each week—cleaning hacks, mini makeovers, and simple systems.</p>
       </div>
-      <form class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto sm:min-w-[320px]">
-        <input type="email" placeholder="Enter your email address" class="flex-1 px-4 py-3 rounded-2xl border-2 border-amber-200/70 bg-white/80 text-sm shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-300/50 transition-all duration-300">
-        <button type="submit" class="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:shadow-amber-400/50 transition-all duration-300 whitespace-nowrap text-sm">
-          Join free
+
+      <form
+        class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto sm:min-w-[320px]"
+        (submit)="$event.preventDefault(); submit()"
+      >
+        <input
+          type="email"
+          placeholder="Enter your email address"
+          class="flex-1 px-4 py-3 rounded-2xl border-2 border-amber-200/70 bg-white/80 text-sm shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-300/50 transition-all duration-300"
+          [value]="email()"
+          (input)="onEmailInput(($any($event.target)).value)"
+          [disabled]="sending() || status() === 'success'"
+        >
+
+        <button
+          type="submit"
+          class="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl hover:shadow-amber-400/50 transition-all duration-300 whitespace-nowrap text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          [disabled]="sending() || status() === 'success'"
+        >
+          {{ sending() ? 'Sending…' : (status() === 'success' ? 'Subscribed' : 'Join free') }}
         </button>
+
       </form>
+    </div>
+
+    <!-- messages -->
+    <div class="w-full text-right">
+      @if (loadingExisting()) {
+        <p class="mt-2 text-xs text-slate-500">Checking subscription status…</p>
+      }
+      @if (fetchError() && !error()) {
+        <p class="mt-2 text-xs text-amber-800">{{ fetchError() }}</p>
+      }
+      @if (error()) {
+        <p class="mt-2 text-sm text-red-700">{{ error() }}</p>
+      }
+      @if (status() === 'success') {
+        <p class="mt-2 text-sm text-emerald-700">Thanks! You’re subscribed.</p>
+      }
     </div>
   </div>
 </section>

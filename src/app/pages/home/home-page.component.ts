@@ -90,7 +90,7 @@ export class HomePageComponent implements OnInit {
           const imageUrl = (post?.main_img ?? '').toString().trim();
 
           const slug = (post?.slug ?? '').toString().trim();
-          const defaultHref = slug ? `/#/post/${slug}` : `/#/post/${id}`;
+          const defaultHref = slug ? `/post/${slug}` : `/post/${id}`;
 
           const tags = Array.isArray(post?.tags)
             ? post.tags.map((t: any) => String(t).trim()).filter(Boolean)
@@ -160,7 +160,7 @@ export class HomePageComponent implements OnInit {
           const item = {
             id: d.id,
             title: name,
-            href: `#/categories/${slug}`,
+            href: `/categories/${slug}`,
             description: typeof data.description === 'string' ? data.description : undefined,
             count: typeof data.postCount === 'number' ? data.postCount : undefined,
             countLabel: 'articles',

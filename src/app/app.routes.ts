@@ -15,6 +15,7 @@ import { AdminMenuPageComponent } from './pages/admin/menu/admin-menu-page.compo
 import { AdminSliderPageComponent } from './pages/admin/slider/admin-slider.component';
 import { CategoriesPageComponent } from './pages/categories/categories-page.component';
 import { PostPageComponent } from './pages/post/post-page.component';
+import { NotFoundPageComponent } from './pages/not-found/not-found-page.component';
 
 export const routes: Routes = [
   // Root shows login
@@ -44,4 +45,6 @@ export const routes: Routes = [
     ],
   },
 
+  // 404 (must be last)
+  { path: '**', component: NotFoundPageComponent },
 ];

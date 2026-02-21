@@ -1,6 +1,12 @@
 import { Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CategoryItem } from '../../types/category.types';
+import {
+  addNewsletterSubscriberEmail,
+  fetchExistingEmails,
+  isValidNewsletterEmail,
+  normalizeNewsletterEmail,
+} from '../../services/newsletter.firestore';
 
 type LastReadPost = {
   id: string;
@@ -40,8 +46,35 @@ export class CategoriesSidebarComponent {
       .slice(0, 4).reverse();
   });
 
+  // newsletter
+  readonly newsletterEmail = signal('');
+  readonly newsletterSending = signal(false);
+  readonly newsletterSuccess = signal<string | null>(null);
+  readonly newsletterError = signal<string | null>(null);
+
+  private existingNewsletterEmails: Set<string> | null = null;
+  private existingEmailsLoading: Promise<void> | null = null;
+
   constructor() {
     this.loadLastReadPostFromStorage();
+    void this.ensureExistingNewsletterEmailsLoaded();
+  }
+
+  private async ensureExistingNewsletterEmailsLoaded() {
+    if (this.existingNewsletterEmails) return;
+    if (this.existingEmailsLoading) return this.existingEmailsLoading;
+
+    this.existingEmailsLoading = (async () => {
+      try {
+        this.existingNewsletterEmails = await fetchExistingEmails();
+      } catch {
+        this.existingNewsletterEmails = new Set(); // best-effort; still allow subscribe
+      } finally {
+        this.existingEmailsLoading = null;
+      }
+    })();
+
+    return this.existingEmailsLoading;
   }
 
   private loadLastReadPostFromStorage() {
@@ -92,5 +125,57 @@ export class CategoriesSidebarComponent {
 
   onClear() {
     this.clear.emit();
+  }
+
+  onNewsletterInput(v: string) {
+    this.newsletterEmail.set(v);
+    this.newsletterError.set(null);
+    this.newsletterSuccess.set(null);
+  }
+
+  async submitNewsletter() {
+    if (this.newsletterSending()) return;
+
+    const raw = this.newsletterEmail();
+    if (!raw?.trim()) {
+      this.newsletterError.set('Email is required.');
+      return;
+    }
+    if (!isValidNewsletterEmail(raw)) {
+      this.newsletterError.set('Please enter a valid email.');
+      return;
+    }
+
+    const normalized = normalizeNewsletterEmail(raw);
+
+    this.newsletterSending.set(true);
+    this.newsletterError.set(null);
+    this.newsletterSuccess.set(null);
+
+    try {
+      await this.ensureExistingNewsletterEmailsLoaded();
+      if (this.existingNewsletterEmails?.has(normalized)) {
+        this.newsletterError.set('This email is already subscribed.');
+        return;
+      }
+
+      await addNewsletterSubscriberEmail({
+        email: normalized,
+        source: 'categories-sidebar',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+        pageUrl: typeof location !== 'undefined' ? location.href : null,
+      });
+
+      // update local cache
+      if (!this.existingNewsletterEmails) this.existingNewsletterEmails = new Set();
+      this.existingNewsletterEmails.add(normalized);
+
+      this.newsletterEmail.set('');
+      this.newsletterSuccess.set('Thanks! You’re subscribed.');
+    } catch (e: any) {
+      this.newsletterError.set(e?.message ?? 'Failed to subscribe. Please try again.');
+    } finally {
+      this.newsletterSending.set(false);
+    }
   }
 }
