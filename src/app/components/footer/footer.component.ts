@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 export type FooterNavLink = {
   label: string;
@@ -8,6 +9,7 @@ export type FooterNavLink = {
 @Component({
   selector: 'app-footer',
   standalone: true,
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './footer.component.html',
   styleUrl: './footer.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

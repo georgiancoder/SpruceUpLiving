@@ -195,4 +195,11 @@ export class HeroSliderComponent implements OnDestroy {
   protected sidebarIsActive(item: HeroSlide, fallbackIndex: number): boolean {
     return this.sidebarSlideIndex(item, fallbackIndex) === this.indexSig();
   }
+
+  protected maskSubtitle(value: string | undefined | null, maxLen = 100): string {
+    const s = (value ?? '').trim();
+    if (!s) return '';
+    if (s.length <= maxLen) return s;
+    return s.slice(0, maxLen).trimEnd() + '…';
+  }
 }

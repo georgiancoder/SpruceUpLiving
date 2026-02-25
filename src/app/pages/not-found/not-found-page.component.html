@@ -45,22 +45,20 @@
 
       <!-- Secondary links -->
       <div class="flex flex-wrap justify-center gap-4 text-xs sm:text-sm text-slate-500">
-        <a href="/categories/home-improvement" class="hover:text-amber-700 transition-colors">
-          Home improvement
-        </a>
-        <span class="hidden sm:inline text-slate-300">•</span>
-        <a href="/categories/cleaning" class="hover:text-amber-700 transition-colors">
-          Cleaning & housekeeping
-        </a>
-        <span class="hidden sm:inline text-slate-300">•</span>
-        <a href="/contact" class="hover:text-amber-700 transition-colors">
-          Contact
-        </a>
+        @for (c of categoryItems; track c.id) {
+          <a
+            href="{{c.href}}"
+            class="hover:text-amber-700 transition-colors"
+          >
+            {{ c.title }}
+          </a>
+          <span class="hidden sm:inline text-slate-300">•</span>
+        }
       </div>
 
       <!-- Small helper text -->
       <p class="mt-6 text-[11px] uppercase tracking-[0.2em] text-slate-400">
-        Error code: 404 · Cozy Nest
+        Error code: 404 · Spruce Up Living
       </p>
     </div>
   </main>

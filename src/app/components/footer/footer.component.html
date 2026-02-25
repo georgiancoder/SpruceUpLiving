@@ -2,8 +2,20 @@
   <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-600">
     <p>© 2026 Spruce Up Living. All rights reserved.</p>
     <div class="flex gap-6">
-      <a href="#" class="hover:text-amber-700 transition-colors">Privacy</a>
-      <a href="#" class="hover:text-amber-700 transition-colors">Terms</a>
+      <a
+        [routerLink]="'/privacy'"
+        routerLinkActive="text-amber-700"
+        class="hover:text-amber-700 transition-colors"
+      >
+        Privacy
+      </a>
+      <a
+        [routerLink]="'/terms'"
+        routerLinkActive="text-amber-700"
+        class="hover:text-amber-700 transition-colors"
+      >
+        Terms
+      </a>
     </div>
   </div>
 </footer>
