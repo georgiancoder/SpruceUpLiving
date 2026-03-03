@@ -13,7 +13,7 @@
     @for (p of posts(); track p.id) {
       <a
         class="group bg-white/95 rounded-2xl shadow-lg hover:shadow-xl hover:shadow-amber-200/50 transition-all overflow-hidden"
-        [routerLink]="['/post', p.id]"
+        [routerLink]="['/post', p.slug || p.id]"
       >
         @if (p.mainImgUrl) {
           <img class="h-48 w-full object-cover" [src]="p.mainImgUrl" [alt]="p.title" loading="lazy" />
@@ -38,4 +38,3 @@
     }
   </div>
 }
-

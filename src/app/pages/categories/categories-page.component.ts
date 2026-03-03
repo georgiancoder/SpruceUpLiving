@@ -103,6 +103,7 @@ export class CategoriesPageComponent implements OnInit {
           main_img: String(data.main_img ?? ''),
           category_ids: Array.isArray(data.category_ids) ? data.category_ids.map(String) : [],
           tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
+          slug: String(data.slug ?? ''),
         };
 
         baseItem.readMinutes = estimateReadingMinutesFromPost(data);

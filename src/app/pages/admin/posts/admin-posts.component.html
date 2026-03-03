@@ -42,6 +42,16 @@
       </div>
 
       <div class="sm:col-span-2">
+        <label class="block text-xs font-medium text-slate-600">slug (auto)</label>
+        <input
+          class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none"
+          [value]="slug()"
+          readonly
+        />
+        <div class="mt-1 text-[11px] text-slate-500">Generated from title; saved into Firestore.</div>
+      </div>
+
+      <div class="sm:col-span-2">
         <label class="block text-xs font-medium text-slate-600">main_img (upload)</label>
         <input
           #mainImgInput
@@ -226,6 +236,12 @@
                         [value]="editTitle()"
                         (input)="editTitle.set(($any($event.target).value))"
                         placeholder="title"
+                      />
+                      <input
+                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+                        [value]="editSlug()"
+                        (input)="editSlug.set(($any($event.target).value))"
+                        placeholder="slug (leave empty to auto-generate)"
                       />
                       <input
                         class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"

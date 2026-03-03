@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 
 export type PostGridItem = {
   id: string;
+  slug?: string;
   title: string;
   description?: string;
   created_at?: string; // ISO string

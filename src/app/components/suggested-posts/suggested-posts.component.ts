@@ -4,6 +4,7 @@ import { collection, getDocs, getFirestore, limit, orderBy, query, where } from 
 
 type SuggestedPostDoc = {
   title?: string;
+  slug?: string;
   description?: string;
   created_at?: string | Date;
   main_img?: string;
@@ -12,6 +13,7 @@ type SuggestedPostDoc = {
 
 type SuggestedPostVM = {
   id: string;
+  slug?: string;
   title: string;
   description: string;
   createdAt?: string | Date;
@@ -47,6 +49,18 @@ export class SuggestedPostsComponent implements OnChanges {
     }
   }
 
+  private slugify(input: string): string {
+    return (input ?? '')
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .replace(/-{2,}/g, '-');
+  }
+
   private async fetchSuggested() {
     const ctx = this.post();
     const currentId = ctx.id;
@@ -70,9 +84,12 @@ export class SuggestedPostsComponent implements OnChanges {
           .filter((d) => d.id !== currentId)
           .map((d) => {
             const data = d.data() as SuggestedPostDoc;
+            const title = (data.title ?? '').trim() || 'Untitled post';
+            const slug = (data.slug ?? '').trim() || this.slugify(title);
             return {
               id: d.id,
-              title: (data.title ?? '').trim() || 'Untitled post',
+              slug,
+              title,
               description: (data.description ?? '').trim(),
               createdAt: data.created_at,
               mainImgUrl: data.main_img,
@@ -89,9 +106,12 @@ export class SuggestedPostsComponent implements OnChanges {
         .filter((d) => d.id !== currentId)
         .map((d) => {
           const data = d.data() as SuggestedPostDoc;
+          const title = (data.title ?? '').trim() || 'Untitled post';
+          const slug = (data.slug ?? '').trim() || this.slugify(title);
           return {
             id: d.id,
-            title: (data.title ?? '').trim() || 'Untitled post',
+            slug,
+            title,
             description: (data.description ?? '').trim(),
             createdAt: data.created_at,
             mainImgUrl: data.main_img,

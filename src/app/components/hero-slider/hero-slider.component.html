@@ -45,7 +45,7 @@
            <div class="relative flex items-center justify-between pt-6 border-t border-amber-200/50">
              <a
                *ngIf="s.ctaLabel"
-               [href]="s.ctaHref || '#'"
+               [routerLink]="slideLink(s)"
                class="group/btn flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-amber-300/60 text-amber-800 font-semibold text-sm shadow-lg shadow-amber-200/50 hover:shadow-xl hover:shadow-amber-300/60 hover:bg-amber-50/50 transition-all duration-300 group-hover/btn:scale-105"
              >
                {{ s.ctaLabel }}
