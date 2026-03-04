@@ -74,6 +74,10 @@ export class AdminPostsPageComponent implements OnInit {
   readonly editMainImgFile = signal<File | null>(null);
   readonly editMainImgPreviewUrl = signal<string | null>(null);
 
+  // slug (stored in Firestore)
+  readonly slug = computed(() => this.slugify(this.title()));
+  readonly editSlug = signal<string>('');
+
   // TinyMCE editor config (shared between create/edit)
   readonly tinyMceInit: Record<string, any> = {
     apiKey: 'd4j3xne2ooctby1b3c0xmbi0jq1ghgrf9pznbks3nbtda698',
@@ -190,6 +194,7 @@ export class AdminPostsPageComponent implements OnInit {
 
       const payload = {
         title,
+        slug: this.slugify(title),
         description,
         content,
         created_at: this.localToIso(this.createdAtLocal()),
@@ -332,6 +337,7 @@ export class AdminPostsPageComponent implements OnInit {
     this.error.set(null);
     this.editingPostId.set(p.id);
     this.editTitle.set(p.title ?? '');
+    this.editSlug.set((p as any)?.slug ? String((p as any)?.slug) : this.slugify(p.title ?? ''));
     this.editDescription.set(p.description ?? '');
     this.editContent.set(p.content ?? '');
     this.editCreatedAtLocal.set(p.created_at ? this.isoToLocalInput(p.created_at) : '');
@@ -349,6 +355,7 @@ export class AdminPostsPageComponent implements OnInit {
   cancelEdit(editImgInput?: HTMLInputElement) {
     this.editingPostId.set(null);
     this.editTitle.set('');
+    this.editSlug.set('');
     this.editDescription.set('');
     this.editContent.set('');
     this.editCreatedAtLocal.set('');
@@ -471,6 +478,7 @@ export class AdminPostsPageComponent implements OnInit {
 
       const payload = {
         title,
+        slug: this.slugify(this.editSlug().trim() || title),
         description,
         content,
         created_at: this.localToIso(this.editCreatedAtLocal()),
@@ -642,5 +650,13 @@ export class AdminPostsPageComponent implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private slugify(s: string) {
+    return s
+      .toLowerCase()
+      .trim()
+      .replace(/[\s\W-]+/g, '-') // replace spaces and non-word chars with hyphen
+      .replace(/^-+|-+$/g, ''); // remove leading/trailing hyphens
   }
 }

@@ -8,6 +8,7 @@ import {
   effect
 } from '@angular/core';
 import {NgClass, NgFor, NgIf} from '@angular/common';
+import {RouterLink} from '@angular/router';
 
 export type HeroSlide = {
   title: string;
@@ -18,12 +19,14 @@ export type HeroSlide = {
   readMinutes?: number;
   categories?: string[];
   tags?: string[];
+  slug?: string; // post slug for /post/:slug routing
+  // (optional) id?: string;
 };
 
 @Component({
   selector: 'app-hero-slider',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass],
+  imports: [NgIf, NgFor, NgClass, RouterLink],
   templateUrl: './hero-slider.component.html',
   styleUrl: './hero-slider.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -201,5 +204,15 @@ export class HeroSliderComponent implements OnDestroy {
     if (!s) return '';
     if (s.length <= maxLen) return s;
     return s.slice(0, maxLen).trimEnd() + '…';
+  }
+
+  protected slideLink(s: HeroSlide): string {
+    // Prefer explicit CTA href when provided
+    if (s.ctaHref) return s.ctaHref;
+
+    // Fallback to post slug route if available
+    if (s.slug) return `/post/${encodeURIComponent(s.slug)}`;
+
+    return '#';
   }
 }

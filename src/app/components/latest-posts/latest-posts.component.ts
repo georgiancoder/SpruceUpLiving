@@ -10,6 +10,7 @@ export type LatestPost = {
   dateLabel?: string;
   tag?: string;
   categories?: string[];
+  slug?: string;
 };
 
 @Component({

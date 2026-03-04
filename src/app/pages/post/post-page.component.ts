@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, getFirestore, limit, query, where } from 'firebase/firestore';
 import { estimateReadingMinutesFromPost } from '../../utils/reading-time';
 import { SuggestedPostsComponent } from '../../components/suggested-posts/suggested-posts.component';
 
@@ -13,10 +13,12 @@ type PostDoc = {
   main_img?: string;
   category_ids?: string[];
   tags?: string[];
+  slug?: string;
 };
 
 type PostVM = {
   id: string;
+  slug?: string;
   title: string;
   description: string;
   contentHtml: string;
@@ -43,30 +45,44 @@ export class PostPageComponent implements OnInit {
 
   ngOnInit() {
     this.route.paramMap.subscribe((pm) => {
-      const postId = pm.get('postId');
-      if (!postId) {
+      const identifier = pm.get('postId'); // can be doc id OR slug
+      if (!identifier) {
         this.post.set(null);
         this.error.set('Missing post id.');
         return;
       }
-      void this.fetchPost(postId);
+      void this.fetchPost(identifier);
     });
   }
 
-  async fetchPost(postId: string) {
+  async fetchPost(identifier: string) {
     this.loading.set(true);
     this.error.set(null);
 
     try {
       const db = getFirestore();
-      const snap = await getDoc(doc(db, 'posts', postId));
+
+      // 1) Try by document id (existing behavior)
+      let snap = await getDoc(doc(db, 'posts', identifier));
+
+      // 2) Fallback: try by slug
       if (!snap.exists()) {
+        const q = query(
+          collection(db, 'posts'),
+          where('slug', '==', identifier),
+          limit(1),
+        );
+        const qs = await getDocs(q);
+        snap = qs.docs[0] as any;
+      }
+
+      if (!snap || !('exists' in snap) ? true : !snap.exists()) {
         this.post.set(null);
         this.error.set('Post not found.');
         return;
       }
 
-      const data = snap.data() as PostDoc;
+      const data = (snap.data() as PostDoc) ?? {};
 
       const readMinutes = estimateReadingMinutesFromPost({
         title: data.title ?? '',
@@ -76,6 +92,7 @@ export class PostPageComponent implements OnInit {
 
       const vm: PostVM = {
         id: snap.id,
+        slug: (data.slug ?? '').trim() || undefined,
         title: (data.title ?? '').trim() || 'Untitled post',
         description: (data.description ?? '').trim(),
         contentHtml: data.content ?? '',
@@ -89,7 +106,7 @@ export class PostPageComponent implements OnInit {
       this.post.set(vm);
       this.saveLastReadPost(vm);
 
-      // Best-effort: increment views via Cloud Function (do not block UI)
+      // Best-effort: increment views via Cloud Function using REAL doc id
       void this.updateViewsViaCloudFunction(vm.id);
     } catch (e: any) {
       this.post.set(null);
@@ -118,6 +135,7 @@ export class PostPageComponent implements OnInit {
     try {
       const payload = {
         id: post.id,
+        slug: post.slug ?? null,
         title: post.title,
         mainImgUrl: post.mainImgUrl ?? null,
         readAt: new Date().toISOString(),
