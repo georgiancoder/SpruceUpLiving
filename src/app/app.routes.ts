@@ -21,23 +21,23 @@ import { TermsPageComponent } from './pages/terms/terms-page.component';
 
 export const routes: Routes = [
   // Root shows login
-  {
-    path: '',
-    component: MainPageComponent,
-    children: [
-      { path: '', pathMatch: "full", component: HomePageComponent },
-      { path: 'categories', component: CategoriesPageComponent },
-      { path: 'categories/:categoryId', component: CategoriesPageComponent },
-      { path: 'post/:postId', component: PostPageComponent },
-      { path: 'privacy', component: PrivacyPageComponent, title: 'Privacy Policy' },
-      { path: 'terms', component: TermsPageComponent, title: 'Terms of Service' },
-    ]
-  },
+  // {
+  //   path: '',
+  //   component: MainPageComponent,
+  //   children: [
+  //     { path: '', pathMatch: "full", component: HomePageComponent },
+  //     { path: 'categories', component: CategoriesPageComponent },
+  //     { path: 'categories/:categoryId', component: CategoriesPageComponent },
+  //     { path: 'post/:postId', component: PostPageComponent },
+  //     { path: 'privacy', component: PrivacyPageComponent, title: 'Privacy Policy' },
+  //     { path: 'terms', component: TermsPageComponent, title: 'Terms of Service' },
+  //   ]
+  // },
 
 
   // Admin with sub routing
   {
-    path: 'admin',
+    path: '',
     component: AdminLayoutComponent,
     children: [
       { path: '', pathMatch: 'full', component: LoginPageComponent, canActivate: [redirectAuthedFromAdminLoginGuard] },

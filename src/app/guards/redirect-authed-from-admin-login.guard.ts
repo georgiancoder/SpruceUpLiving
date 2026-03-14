@@ -11,7 +11,7 @@ export const redirectAuthedFromAdminLoginGuard: CanActivateFn = (_route, _state)
       unsub();
 
       if (user) {
-        void router.navigate(['/admin/dashboard']);
+        void router.navigate(['/dashboard']);
         return resolve(false);
       }
 

@@ -11,7 +11,7 @@ export const adminAuthGuard: CanActivateFn = (_route, state) => {
       unsub();
 
       if (!user) {
-        void router.navigate(['/admin'], { queryParams: { returnUrl: state.url } });
+        void router.navigate(['/'], { queryParams: { returnUrl: state.url } });
         return resolve(false);
       }
 
@@ -25,13 +25,13 @@ export const adminAuthGuard: CanActivateFn = (_route, state) => {
           } catch {
             // ignore sign-out failures; still block navigation
           }
-          void router.navigate(['/admin'], { queryParams: { returnUrl: state.url } });
+          void router.navigate(['/'], { queryParams: { returnUrl: state.url } });
           return resolve(false);
         }
 
         return resolve(true);
       } catch {
-        void router.navigate(['/admin'], { queryParams: { returnUrl: state.url } });
+        void router.navigate(['/'], { queryParams: { returnUrl: state.url } });
         return resolve(false);
       }
     });
