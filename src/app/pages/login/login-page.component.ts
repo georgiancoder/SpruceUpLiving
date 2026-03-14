@@ -43,7 +43,7 @@ export class LoginPageComponent {
     this.errorMessage = '';
     try {
       await signInWithEmailAndPassword(this.auth, this.email, this.password);
-      await this.router.navigate(['/admin/dashboard']);
+      await this.router.navigate(['/dashboard']);
     } catch (e: any) {
       this.errorMessage = e?.message ?? 'Login failed';
     }
@@ -53,7 +53,7 @@ export class LoginPageComponent {
     this.errorMessage = '';
     try {
       await signInWithPopup(this.auth, this.googleProvider);
-      await this.router.navigate(['/admin/dashboard']);
+      await this.router.navigate(['/dashboard']);
     } catch (e: any) {
       this.errorMessage = e?.message ?? 'Google sign-in failed';
     }
