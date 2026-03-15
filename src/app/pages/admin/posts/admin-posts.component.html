@@ -1,9 +1,9 @@
-<section class="p-4 sm:p-6">
+<section class="p-3 sm:p-6">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <h1 class="text-xl font-semibold text-slate-900">Posts</h1>
 
     <a
-      class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+      class="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 sm:w-auto sm:py-2"
       routerLink="/dashboard"
     >
       Back to dashboard
@@ -16,13 +16,13 @@
     </div>
   }
 
-  <div class="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+  <div class="mt-6 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <h2 class="text-sm font-semibold text-slate-900">Create post</h2>
 
       <button
         type="button"
-        class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
+        class="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 sm:w-auto sm:py-1.5"
         (click)="fillCreatedNow()"
         [disabled]="loading()"
       >
@@ -34,7 +34,7 @@
       <div class="sm:col-span-2">
         <label class="block text-xs font-medium text-slate-600">title</label>
         <input
-          class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+          class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base outline-none focus:border-slate-400 sm:py-2 sm:text-sm"
           [value]="title()"
           (input)="title.set(($any($event.target).value))"
           placeholder="post title"
@@ -87,7 +87,7 @@
         <label class="block text-xs font-medium text-slate-600">created_at</label>
         <input
           type="datetime-local"
-          class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+          class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base outline-none focus:border-slate-400 sm:py-2 sm:text-sm"
           [value]="createdAtLocal()"
           (input)="createdAtLocal.set(($any($event.target).value))"
         />
@@ -96,7 +96,7 @@
       <div class="sm:col-span-3">
         <label class="block text-xs font-medium text-slate-600">description</label>
         <input
-          class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+          class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-base outline-none focus:border-slate-400 sm:py-2 sm:text-sm"
           [value]="description()"
           (input)="description.set(($any($event.target).value))"
           placeholder="post description"
@@ -181,7 +181,7 @@
       <div class="sm:col-span-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
         <button
           type="button"
-          class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
+          class="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50 sm:w-auto sm:py-2"
           (click)="title.set(''); description.set(''); content.set(''); createdAtLocal.set(''); clearMainImg(mainImgInput); categoryIdsCsv.set(''); tagsCsv.set(''); error.set(null)"
           [disabled]="loading()"
         >
@@ -190,7 +190,7 @@
 
         <button
           type="button"
-          class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+          class="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2"
           (click)="addPost()"
           [disabled]="loading() || !canAddPost()"
         >
@@ -201,7 +201,7 @@
   </div>
 
   <div class="mt-6 rounded-xl border border-slate-200 bg-white">
-    <div class="flex items-center justify-between border-b border-slate-200 p-4">
+    <div class="flex flex-col gap-2 border-b border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
       <h2 class="text-sm font-semibold text-slate-900">
         Latest posts
         <span class="ml-2 text-xs font-medium text-slate-500">({{ posts().length }})</span>
@@ -212,229 +212,167 @@
       }
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-left text-sm">
-        <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
-          <tr>
-            <th class="px-4 py-3">title</th>
-            <th class="px-4 py-3">created_at</th>
-            <th class="px-4 py-3">category_ids</th>
-            <th class="px-4 py-3">tags</th>
-            <th class="px-4 py-3 text-right">actions</th>
+    <!-- NEW: Full-height scrollable container -->
+    <div class="h-dvh flex flex-col sm:h-auto sm:overflow-visible overflow-hidden sm:overflow-auto">
+      <div class="flex-1 overflow-y-auto px-2 py-4 sm:px-0 sm:py-0">
+        <table class="min-w-full text-left text-sm block sm:table border-collapse sm:border-separate sm:border-spacing-y-2">
+          <thead class="hidden sm:table-header-group bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
+          <tr class="sm:table-row">
+            <th class="px-4 py-3 sm:table-cell">title</th>
+            <th class="px-4 py-3 sm:table-cell">created_at</th>
+            <th class="px-4 py-3 sm:table-cell">category_ids</th>
+            <th class="px-4 py-3 sm:table-cell">tags</th>
+            <th class="px-4 py-3 text-right sm:table-cell">actions</th>
           </tr>
-        </thead>
+          </thead>
 
-        <tbody class="divide-y divide-slate-100">
-          @for (p of posts(); track p.id) {
-            <tr class="text-slate-800 align-top">
-              <td class="px-4 py-3">
-                @if (editingPostId() === p.id) {
-                  <div class="space-y-2">
-                    <div class="grid grid-cols-1 gap-2">
-                      <input
-                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
-                        [value]="editTitle()"
-                        (input)="editTitle.set(($any($event.target).value))"
-                        placeholder="title"
-                      />
-                      <input
-                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
-                        [value]="editSlug()"
-                        (input)="editSlug.set(($any($event.target).value))"
-                        placeholder="slug (leave empty to auto-generate)"
-                      />
-                      <input
-                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
-                        [value]="editDescription()"
-                        (input)="editDescription.set(($any($event.target).value))"
-                        placeholder="description"
-                      />
-                    </div>
-
-                    <div>
-                      <label class="block text-[11px] font-medium text-slate-600">Replace image (optional)</label>
-                      <input
-                        #editImgInput
-                        type="file"
-                        accept="image/*"
-                        class="mt-1 block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-slate-800 disabled:opacity-50"
-                        (change)="onEditMainImgSelected($any($event.target))"
-                        [disabled]="loading()"
-                      />
-                      @if (editMainImgPreviewUrl()) {
-                        <div class="mt-2 flex items-center gap-3">
-                          <img class="h-10 w-10 rounded-lg object-cover ring-1 ring-slate-200" [src]="editMainImgPreviewUrl()!" alt="New image preview" />
-                          <button
-                            type="button"
-                            class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-50"
-                            (click)="clearEditMainImg(editImgInput)"
-                            [disabled]="loading()"
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      }
-                    </div>
-
-                    <div>
-                      <label class="mb-1 block text-[11px] font-medium text-slate-600">content</label>
-                      <div class="w-full">
-                        <editor
-                          apiKey="d4j3xne2ooctby1b3c0xmbi0jq1ghgrf9pznbks3nbtda698"
-                          class="block w-full"
-                          style="width: 100%; display: block;"
-                          [init]="tinyMceInit"
-                          [ngModel]="editContent()"
-                          (ngModelChange)="editContent.set($event)"
-                          [disabled]="loading()"
-                        ></editor>
+          <tbody class="block sm:table-row-group divide-y divide-slate-100 sm:divide-y-0">
+            @for (p of posts(); track p.id) {
+              <!-- SIMPLIFIED: No max-h on tr, let container handle scroll -->
+              <tr class="mb-4 p-4 rounded-lg border border-slate-200 bg-white shadow-sm block sm:table-row sm:p-0 sm:m-0 sm:border-none sm:shadow-none sm:bg-transparent">
+                <!-- Title cell - full edit form, unconstrained -->
+                <td class="block pb-12 sm:pb-3 sm:table-cell sm:px-4 sm:py-3 sm:align-top">
+                  @if (editingPostId() === p.id) {
+                    <div class="space-y-4">
+                      <!-- Inputs grid -->
+                      <div class="grid grid-cols-1 gap-3">
+                        <input class="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400" [value]="editTitle()" (input)="editTitle.set(($any($event.target).value))" placeholder="Post title" />
+                        <input class="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400" [value]="editSlug()" (input)="editSlug.set(($any($event.target).value))" placeholder="slug (leave empty to auto-generate)" />
+                        <input class="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400" [value]="editDescription()" (input)="editDescription.set(($any($event.target).value))" placeholder="Description" />
                       </div>
 
-                      @if (uploadingEditorImage()) {
-                        <div class="mt-2">
-                          <div class="flex items-center justify-between text-[11px] text-slate-600">
-                            <span>Uploading image…</span>
+                      <!-- Image upload -->
+                      <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-2">Main image (optional)</label>
+                        <input #editImgInput type="file" accept="image/*" class="w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-slate-900 file:text-xs file:font-semibold file:text-white hover:file:bg-slate-800 cursor-pointer" (change)="onEditMainImgSelected($any($event.target))" [disabled]="loading()" />
+                        @if (editMainImgPreviewUrl()) {
+                          <div class="mt-3 flex items-center gap-3">
+                            <img class="h-16 w-16 flex-shrink-0 rounded-lg object-cover ring-2 ring-slate-200" [src]="editMainImgPreviewUrl()!" alt="Preview" />
+                            <button type="button" class="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" (click)="clearEditMainImg(editImgInput)" [disabled]="loading()">Remove</button>
+                          </div>
+                        }
+                      </div>
+
+                      <!-- Content editor - limited height for mobile -->
+                      <div class="space-y-2">
+                        <label class="block text-sm font-medium text-slate-600">Content</label>
+                        <div class="w-full min-h-[200px] max-h-[40vh] overflow-auto border rounded-lg p-3 bg-slate-50">
+                          <editor
+                            apiKey="d4j3xne2ooctby1b3c0xmbi0jq1ghgrf9pznbks3nbtda698"
+                            class="w-[80vw]"
+                            style="height: 100%;"
+                            [init]="tinyMceInit"
+                            [ngModel]="editContent()"
+                            (ngModelChange)="editContent.set($event)"
+                            [disabled]="loading()"
+                          ></editor>
+                        </div>
+                        @if (uploadingEditorImage()) {
+                          <div class="flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-2 rounded-lg">
+                            <span>Uploading...</span>
                             <span>{{ editorImageUploadProgress() }}%</span>
                           </div>
-                          <div class="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              class="h-full rounded-full bg-slate-900 transition-[width]"
-                              [style.width.%]="editorImageUploadProgress()"
-                            ></div>
-                          </div>
-                        </div>
-                      }
+                        }
+                      </div>
                     </div>
-                  </div>
-                } @else {
-                  <div class="flex gap-3">
-                    @if (p.main_img) {
-                      <a class="mt-0.5 shrink-0" [href]="p.main_img" target="_blank" rel="noreferrer" title="Open image">
-                        <img
-                          class="h-12 w-12 rounded-lg object-cover ring-1 ring-slate-200"
-                          [src]="p.main_img"
-                          [alt]="p.title ? (p.title + ' image') : 'Post image'"
-                          loading="lazy"
-                          referrerpolicy="no-referrer"
-                        />
-                      </a>
-                    }
-                    <div class="min-w-0">
-                      <div class="font-medium text-slate-900">{{ p.title }}</div>
-                      @if (p.description) {
-                        <div class="mt-0.5 line-clamp-1 text-xs text-slate-500">{{ p.description }}</div>
-                      }
+                  } @else {
+                    <!-- View mode - compact card top -->
+                    <div class="flex items-start gap-3">
                       @if (p.main_img) {
-                        <a class="mt-1 block text-[11px] text-slate-600 underline" [href]="p.main_img" target="_blank" rel="noreferrer">View image</a>
+                        <a class="flex-shrink-0 mt-1" [href]="p.main_img" target="_blank" rel="noreferrer">
+                          <img class="h-16 w-16 rounded-xl object-cover ring-2 ring-slate-200 shadow-md" [src]="p.main_img" [alt]="p.title" loading="lazy" />
+                        </a>
+                      }
+                      <div class="min-w-0 flex-1">
+                        <h3 class="font-semibold text-slate-900 text-base leading-tight">{{ p.title }}</h3>
+                        @if (p.description) {
+                          <p class="mt-1 text-sm text-slate-600 line-clamp-2">{{ p.description }}</p>
+                        }
+                        @if (p.main_img) {
+                          <a class="mt-2 inline-block text-xs font-medium text-blue-600 hover:text-blue-500 underline">View image →</a>
+                        }
+                      </div>
+                    </div>
+                  }
+                </td>
+
+                <!-- Mobile stacked info -->
+                <div class="sm:hidden space-y-3 pt-4 border-t border-slate-200">
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-600 font-medium">Created</span>
+                    <span class="font-mono text-slate-900">{{ p.created_at ? (p.created_at | date: 'MMM d, y') : '—' }}</span>
+                  </div>
+                  <div>
+                    <span class="block text-xs font-medium text-slate-600 mb-1">Categories</span>
+                    <div class="flex flex-wrap gap-1.5">
+                      @for (cid of p.category_ids; track cid) {
+                        <span class="px-2 py-1 bg-slate-100 text-xs rounded-full text-slate-700">{{ cid }}</span>
                       }
                     </div>
                   </div>
-                }
-              </td>
-
-              <td class="px-4 py-3 text-xs text-slate-600">
-                @if (editingPostId() === p.id) {
-                  <input
-                    type="datetime-local"
-                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-slate-400"
-                    [value]="editCreatedAtLocal()"
-                    (input)="editCreatedAtLocal.set(($any($event.target).value))"
-                  />
-                } @else {
-                  {{ p.created_at ? (p.created_at | date: 'medium') : '—' }}
-                }
-              </td>
-
-              <td class="px-4 py-3">
-                @if (editingPostId() === p.id) {
-                  <select
-                    multiple
-                    class="h-28 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-slate-400"
-                    (change)="onEditCategoryIdsChange($any($event.target).selectedOptions)"
-                    [disabled]="loading() || categoriesLoading()"
-                  >
-                    @for (c of categories(); track c.id) {
-                      <option [value]="c.id" [selected]="editSelectedCategoryIds().includes(c.id)">{{ c.title }}</option>
-                    }
-                  </select>
-                } @else {
-                  <div class="flex flex-wrap gap-1">
-                    @for (cid of p.category_ids; track cid) {
-                      <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{{ cid }}</span>
-                    }
+                  <div>
+                    <span class="block text-xs font-medium text-slate-600 mb-1">Tags</span>
+                    <div class="flex flex-wrap gap-1.5">
+                      @for (t of p.tags; track t) {
+                        <span class="px-2 py-1 bg-slate-100 text-xs rounded-full text-slate-700">{{ t }}</span>
+                      }
+                    </div>
                   </div>
-                }
-              </td>
+                </div>
 
-              <td class="px-4 py-3">
-                @if (editingPostId() === p.id) {
-                  <input
-                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-slate-400"
-                    [value]="editSelectedTags().join(', ')"
-                    (change)="onTagsChange(($any($event.target).value || ''))"
-                    placeholder="tag1, tag2"
-                  />
-                } @else {
-                  <div class="flex flex-wrap gap-1">
-                    @for (t of p.tags; track t) {
-                      <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{{ t }}</span>
-                    }
-                  </div>
-                }
-              </td>
+                <!-- Desktop cells - hidden on mobile -->
+                <td class="hidden sm:table-cell px-4 py-3 text-xs text-slate-600 font-mono">{{ p.created_at ? (p.created_at | date: 'medium') : '—' }}</td>
+                <td class="hidden sm:table-cell px-4 py-3">
+                  @if (editingPostId() === p.id) {
+                    <select multiple class="w-full h-24 rounded-lg border border-slate-200 p-2 text-xs focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 bg-white" (change)="onEditCategoryIdsChange($any($event.target).selectedOptions)" [disabled]="loading() || categoriesLoading()">
+                      @for (c of categories(); track c.id) { <option [value]="c.id" [selected]="editSelectedCategoryIds().includes(c.id)">{{ c.title }}</option> }
+                    </select>
+                  } @else {
+                    <div class="flex flex-wrap gap-1">
+                      @for (cid of p.category_ids; track cid) { <span class="px-2 py-1 bg-slate-100 text-xs rounded-full text-slate-700">{{ cid }}</span> }
+                    </div>
+                  }
+                </td>
+                <td class="hidden sm:table-cell px-4 py-3">
+                  @if (editingPostId() === p.id) {
+                    <input class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400" [value]="editSelectedTags().join(', ')" (input)="onTagsChange(($any($event.target).value || ''))" placeholder="tag1, tag2, tag3" />
+                  } @else {
+                    <div class="flex flex-wrap gap-1">
+                      @for (t of p.tags; track t) { <span class="px-2 py-1 bg-slate-100 text-xs rounded-full text-slate-700">{{ t }}</span> }
+                    </div>
+                  }
+                </td>
 
-              <td class="px-4 py-3 text-right">
-                @if (editingPostId() === p.id) {
-                  <div class="inline-flex gap-2">
-                    <button
-                      type="button"
-                      class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-                      (click)="saveEdit(p.id)"
-                      [disabled]="loading()"
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
-                      (click)="cancelEdit()"
-                      [disabled]="loading()"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                } @else {
-                  <div class="inline-flex gap-2">
-                    <button
-                      type="button"
-                      class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
-                      (click)="startEdit(p)"
-                      [disabled]="loading()"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
-                      (click)="removePost(p.id)"
-                      [disabled]="loading()"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td class="px-4 py-6 text-center text-sm text-slate-500" colspan="5">
-                No posts yet.
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+                <!-- Actions - sticky bottom on mobile during edit -->
+                <td class="sticky bottom-4 left-4 right-4 z-10 bg-white/95 backdrop-blur-sm border-t border-slate-200 pt-4 sm:static sm:table-cell sm:px-4 sm:py-3 sm:z-auto sm:bg-transparent sm:border-none sm:pt-0 sm:backdrop-blur-none">
+                  @if (editingPostId() === p.id) {
+                    <div class="flex gap-3 justify-end">
+                      <button type="button" class="flex-1 sm:flex-none px-6 py-3 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-lg shadow-slate-900/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" (click)="saveEdit(p.id)" [disabled]="loading()">
+                        Save Changes
+                      </button>
+                      <button type="button" class="px-6 py-3 text-sm font-semibold text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-xl shadow-sm transition-all duration-200 disabled:opacity-50" (click)="cancelEdit()" [disabled]="loading()">
+                        Cancel
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="flex gap-2 justify-end">
+                      <button type="button" class="px-4 py-2 text-xs font-medium text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors" (click)="startEdit(p)" [disabled]="loading()">Edit</button>
+                      <button type="button" class="px-4 py-2 text-xs font-medium text-red-700 border border-red-200 hover:bg-red-50 rounded-lg transition-colors" (click)="removePost(p.id)" [disabled]="loading()">Delete</button>
+                    </div>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td class="p-12 text-center text-slate-500 sm:col-span-5" colspan="5">No posts yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
+
+
   </div>
 </section>
 
